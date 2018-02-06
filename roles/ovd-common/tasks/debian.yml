@@ -20,6 +20,12 @@
   when: (ansible_distribution_release not in ('trusty', 'xenial')) or
         (ansible_distribution_release == 'xenial' and ovd_version_detected is version('2.5', '<'))
 
+- name: Add HTTPS support for apt
+  apt:
+    name: apt-transport-https
+    update_cache: yes
+    state: present
+
 - name: Install OVD Keyring
   apt_key:
     url: "{{ ovd_repo }}/keyring"
