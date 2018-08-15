@@ -21,6 +21,11 @@
         (ansible_distribution_release == 'bionic' and ovd_version_detected is version('2.7', '<')) or
         (ansible_distribution_release == 'xenial' and ovd_version_detected is version('2.5', '<'))
 
+- name: Install required gpg
+  apt:
+    name: gnupg
+    state: present
+
 - name: Add HTTPS support for apt
   apt:
     name: apt-transport-https
