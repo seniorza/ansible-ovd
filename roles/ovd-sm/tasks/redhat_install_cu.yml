@@ -1,0 +1,48 @@
+# Copyright (C) 2018 Inuvika Inc.
+# https://www.inuvika.com
+# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- name: Install OVD Session Manager
+  yum:
+    name: inuvika-ovd-session-manager
+    state: latest
+  register: sm_install_result
+  ignore_errors: yes
+  notify:
+    - Configure Session Manager Database
+
+- fail:
+    msg: Unable to install the Session Manager
+  when: sm_install_result is failed and not ovd_sm_force_update|bool
+
+- name: Switch Session Manager to maintenance and kill all sessions
+  sm_api:
+    maintenance: true
+    killall: true
+    user: "{{ ovd_sm_admin_login }}"
+    password: "{{ ovd_sm_admin_password }}"
+  when: sm_install_result is failed and ovd_sm_force_update|bool
+  notify:
+    - Update Session Manager
+
+- name: Update OVD Session Manager
+  yum:
+    name:
+    - php-mbstring
+    - inuvika-ovd-session-manager
+    state: latest
+  when: sm_install_result is failed and ovd_sm_force_update|bool
+  notify:
+    - Configure Session Manager Database

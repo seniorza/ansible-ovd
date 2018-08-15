@@ -1,0 +1,117 @@
+# Copyright (C) 2018 Inuvika Inc.
+# https://www.inuvika.com
+# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+# Author Julien Langlois <julien@inuvika.com> 2018
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- name: Enable audio service
+  win_service:
+    name: Audiosrv
+    start_mode: auto
+    state: started
+
+- name: Install RDS
+  win_feature:
+    name: "RDS-RD-Server"
+    state: present
+    restart: no
+    include_sub_features: yes
+    include_management_tools: yes
+  register: install_rds
+
+- name: Reboot after RDS install
+  win_reboot:
+  when: install_rds.restart_needed
+
+- name: Configure RDS
+  raw: >
+    (Get-WmiObject Win32_TerminalServiceSetting -Namespace root\cimv2\TerminalServices).SetAllowTsConnections(1,1);
+    (Get-WmiObject -Class "Win32_TSGeneralSetting" -Namespace root\cimv2\TerminalServices -Filter "TerminalName='RDP-tcp'").SetUserAuthenticationRequired({{ '1' if ovd_version_detected is version('2.6', '>=') else '0' }})
+
+- name: Set RDP User Authentication Level
+  win_regedit:
+    section: Registry Values
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+    name: UserAuthentication
+    data: "{{ 1 if ovd_version_detected is version('2.6', '>=') else 0 }}"
+    type: dword
+
+- name: Set RDP Minimum Encryption Level
+  win_regedit:
+    section: Registry Values
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+    name: MinEncryptionLevel
+    data: "{{ 2 if ovd_version_detected is version('2.6', '>=') else 1 }}"
+    type: dword
+
+- name: Set RDP Security Layer
+  win_regedit:
+    section: Registry Values
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+    name: SecurityLayer
+    data: "{{ 1 if ovd_version_detected is version('2.6', '>=') else 0 }}"
+    type: dword
+
+- name: Download OVD Windows Application Server
+  win_get_url:
+    url: '{{ ovd_repo }}/{{ oas_setup_filename.result }}'
+    dest: '%TEMP%\{{ oas_setup_filename.result }}'
+    force: no
+  tags: [ovd, ovd-as]
+  notify:
+    - Install Inuvika certificate as a trusted publisher
+    - Install OVD Windows Application Server
+    - Reconfigure Session Manager
+    - Reconfigure Logs
+    - Restart OVD Windows Application Server
+
+- name: Configure Session Manager
+  win_regedit:
+    key: HKLM:\SOFTWARE\OVD\SlaveServer
+    value: session_manager
+    data: "{{ ovd_session_manager }}"
+  tags: [ovd, ovd-as]
+  notify:
+    - Restart OVD Windows Application Server
+
+- name: Configure Logs
+  win_regedit:
+    key: HKLM:\SOFTWARE\OVD\SlaveServer\log
+    value: level
+    data: "{{ ovd_slaveserver_log_levels }}"
+  tags: [ovd, ovd-as]
+  notify:
+    - Restart OVD Windows Application Server
+
+- name: Ensure OVD service is started
+  win_service:
+    name: OVD
+    state: started
+  tags: [ovd, ovd-as]
+  ignore_errors: yes
+
+- name: Add a Scheduler to restart the Windows Font Cache Service
+  win_scheduled_task:
+    name: FontCache
+    path: Inuvika
+    actions:
+    - path: cmd.exe
+      arguments: /C "net stop FontCache && net start FontCache"
+    triggers:
+    - type: daily
+      start_boundary: 3am
+    description: "open command prompt"
+    state: present
+    user: SYSTEM
+  ignore_errors: yes

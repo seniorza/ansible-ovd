@@ -1,0 +1,31 @@
+# Copyright (C) 2018 Inuvika Inc.
+# https://www.inuvika.com
+# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+ovd_default_webaccess: 127.0.0.1
+ovd_webaccess_url: http://{{ ovd_default_webaccess }}/
+# ovd_esg_address: 0.0.0.0
+# ovd_esg_port: 443
+# ovd_esg_max_process: 10
+# ovd_esg_max_connection: 100
+# ovd_esg_process_timeout: 60
+# ovd_esg_connection_timeout: 10
+# ovd_esg_http_max_header_size: 2048
+ovd_esg_admin_redirection: false
+ovd_esg_root_redirection: /ovd
+# ovd_esg_http_keep_alive: true
+# ovd_esg_disable_sslv2: false
+# ovd_esg_force_buffering: /ovd/client/start /ovd/client/start.php
+# ovd_esg_token_expiration: 30

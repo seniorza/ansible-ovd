@@ -1,0 +1,84 @@
+# Copyright (C) 2018 Inuvika Inc.
+# https://www.inuvika.com
+# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- hosts: sm
+  vars:
+    ovd_mysql_password: "{{ lookup('password', 'credentials/ovd_mysql_password length=15 chars=ascii_letters,digits') }}"
+    ovd_sm_encryption_key: "{{ lookup('password', 'credentials/ovd_sm_encryption_key length=32 chars=ascii_letters,digits') }}"
+    ovd_sm_admin_password: "{{ lookup('password', 'credentials/ovd_sm_admin_password length=10 chars=ascii_letters,digits') }}"
+    ovd_session_manager: '127.0.0.1'
+  roles:
+    - ovd-sm
+    - ovd-ac
+
+- hosts: gw
+  vars:
+    ovd_session_manager: "{{ groups['sm'] | map('extract', hostvars, ['ansible_host']) | list | first }}"
+  roles:
+    - ovd-esg
+
+- hosts: wa
+  vars:
+    ovd_session_manager: "{{ groups['sm'] | map('extract', hostvars, ['ansible_host']) | list | first }}"
+  roles:
+    - ovd-wa
+
+- hosts: fs
+  vars:
+    ovd_session_manager: "{{ groups['sm'] | map('extract', hostvars, ['ansible_host']) | list | first }}"
+  roles:
+    - ovd-fs
+
+- hosts: loas
+  vars:
+    ovd_session_manager: "{{ groups['sm'] | map('extract', hostvars, ['ansible_host']) | list | first }}"
+  roles:
+    - ovd-as
+  tasks:
+    - name: Install Softwares
+      package:
+        name: '{{ linux_applications }}'
+        state: present
+      notify:
+        - Restart Slaveserver
+
+- hosts: woas
+  vars:
+    ovd_session_manager: "{{ groups['sm'] | map('extract', hostvars, ['ansible_host']) | list | first }}"
+  roles:
+    - ovd-as
+  tasks:
+    - name: Install Softwares
+      win_chocolatey:
+        name: '{{ windows_applications }}'
+        state: present
+      when: windows_applications is defined and windows_applications|length > 0
+
+    - when: windows_domain is defined
+      block:
+        - name: Register the server to the domain
+          win_domain_membership:
+            dns_domain_name: '{{ windows_domain }}'
+            hostname: "{{ inventory_hostname }}"
+            domain_admin_user: '{{ domain_admin_user }}'
+            domain_admin_password: '{{ domain_admin_password }}'
+            domain_ou_path: '{{ domain_ou_path }}'
+            state: domain
+          register: domain_state
+
+        - name: Reboot the server
+          win_reboot:
+          when: domain_state.reboot_required

@@ -1,0 +1,55 @@
+# Copyright (C) 2018 Inuvika Inc.
+# https://www.inuvika.com
+# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- name: Install Python modules
+  yum:
+    name:
+    - MySQL-python
+    - SOAPpy
+    state: present
+
+- name: Install MySQL
+  yum:
+    name: "{{ mysql_packages }}"
+    state: present
+
+- name: Enable MySQL service
+  service:
+    name: "{{ mysql_service_name }}"
+    state: started
+    enabled: true
+
+- name: Create MySQL database
+  mysql_db:
+    name: "{{ ovd_mysql_database }}"
+    state: present
+  notify:
+    - Configure Session Manager Database
+
+- name: Create MySQL user
+  mysql_user:
+    name: "{{ ovd_mysql_login }}"
+    password: "{{ ovd_mysql_password }}"
+    priv: "{{ ovd_mysql_database }}.*:ALL"
+    state: present
+  notify:
+    - Configure Session Manager Database
+
+- include_tasks: redhat_install_cu.yml
+  when: not ovd_sm_remove_can_update|bool
+
+- include_tasks: redhat_install_rcu.yml
+  when: ovd_sm_remove_can_update|bool

@@ -1,0 +1,46 @@
+# Copyright (C) 2018 Inuvika Inc.
+# https://www.inuvika.com
+# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- name: Check the OS version
+  fail:
+    msg: "{{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported by OVD {{ ovd_version_detected }}"
+  when: ansible_distribution_major_version != '7'
+
+- block:
+  - name: Install the EPEL repository
+    yum:
+      name: "{{ epel7_url }}"
+      state: present
+  when: ansible_distribution_major_version == '7'
+
+- block:
+  - name: Install the subscription-manager package
+    yum:
+      name: subscription-manager
+      state: present
+  - name: Enable the Optional Repository Channel
+    command: subscription-manager repos --enable=rhel-7-server-optional-rpms
+  when: ansible_distribution_major_version == '7' and ansible_distribution in ['RedHat', 'Red Hat Enterprise Linux']
+
+- name: Add OVD Repository
+  yum_repository:
+    name: ovd-{{ ovd_version_detected }}
+    description: Inuvika OVD {{ ovd_version_detected }}
+    baseurl: '{{ ovd_repo }}/rhel/{{ ansible_distribution_major_version }}/'
+    gpgkey: '{{ ovd_repo }}/keyring'
+    gpgcheck: yes
+    state: present
+    file: ovd

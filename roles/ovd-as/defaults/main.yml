@@ -1,0 +1,27 @@
+# Copyright (C) 2018 Inuvika Inc.
+# https://www.inuvika.com
+# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+ovd_session_manager: 127.0.0.1
+ovd_disable_selinux: true
+# ovd_as_thread_count: 1
+# ovd_as_check_shell: false
+# ovd_as_linux_icon_theme: CrystalGnome
+# ovd_as_linux_skel_directory: /dev/null
+# ovd_as_linux_fuse_group: fuse
+# ovd_as_override_password_method: unix
+# ovd_as_override_password_repository: 
+# ovd_as_disable_autostart: imsettings-start
+# ovd_as_disconnection_delay: 4

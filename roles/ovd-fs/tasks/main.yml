@@ -1,0 +1,82 @@
+# Copyright (C) 2018 Inuvika Inc.
+# https://www.inuvika.com
+# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- name: Add the OS specific variables
+  include_vars: '{{ ansible_os_family | lower }}.yml'
+  tags: [ovd, ovd-fs]
+
+- include_tasks: debian.yml
+  when: ansible_os_family == 'Debian'
+  tags: [ovd, ovd-fs]
+
+- include_tasks: redhat.yml
+  when: ansible_os_family == 'RedHat'
+  tags: [ovd, ovd-fs]
+
+- name: Allow programs' execution
+  ini_file:
+    dest: /etc/samba/smb.conf
+    section: global
+    option: acl allow execute always
+    value: True
+  tags: [ovd, ovd-fs]
+  when: ovd_allow_execute|bool and (ansible_os_family != 'RedHat' or ansible_distribution_major_version != '6')
+  notify:
+    - Restart Samba
+
+- name: Ensure Samba is started
+  service:
+    name: '{{ samba_service_name }}'
+    state: started
+    enabled: yes
+  tags: [ovd, ovd-fs]
+
+- name: Update Slaveserver Roles
+  ovd_slaveserver_role:
+    dest: /etc/ovd/slaveserver/slaveserver.conf
+    name: FileServer
+    state: present
+  notify:
+    - Restart OVD Slaveserver
+  tags: [ovd, ovd-fs]
+
+- name: Configure OVD File Server
+  ini_file:
+    path: /etc/ovd/slaveserver/slaveserver.conf
+    section: FileServer
+    option: '{{ item.option }}'
+    value: '{{ lookup("vars", item.value, default="") }}'
+    state: '{{ "absent" if lookup("vars", item.value, default="") == "" else "present" }}'
+    mode: 0644
+  notify:
+    - Restart OVD Slaveserver
+  with_items:
+    - { option: thread_count, value: ovd_fs_thread_count }
+    - { option: user, value: ovd_fs_user }
+    - { option: group, value: ovd_fs_group }
+    - { option: data_dir, value: ovd_fs_data_dir }
+    - { option: FSBackendConf, value: ovd_fs_backend }
+    - { option: dav_user, value: ovd_fs_dav_user }
+    - { option: samba_group, value: ovd_fs_samba_group }
+    - { option: enforce_user_rights, value: ovd_fs_enforce_user_rights }
+
+- name: Ensure OVD Slaveserver is started
+  service:
+    name: ovd-slaveserver
+    state: started
+    enabled: yes
+    pattern: "ovd-slaveserver --daemonize"
+  tags: [ovd, ovd-fs]

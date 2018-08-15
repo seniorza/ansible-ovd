@@ -1,0 +1,161 @@
+# Copyright (C) 2018 Inuvika Inc.
+# https://www.inuvika.com
+# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- when: ansible_os_family == 'Debian'
+  block:
+  - name: Install Kernel header
+    apt:
+      name: linux-image-extra-{{ ansible_kernel }}
+      update_cache: yes
+      cache_valid_time: 259200
+      state: latest
+    when: not(ansible_virtualization_type is defined and ansible_virtualization_type == 'lxc')
+
+  - name: Install OVD Linux Application Server
+    apt:
+      name: 
+      - inuvika-ovd-slaveserver-role-aps
+      - inuvika-ovd-desktop
+      - inuvika-ovd-desktop-gtk-theme
+      - inuvika-ovd-externalapps-client
+      - inuvika-ovd-logout-dialog
+      - inuvika-ovd-regular-union-fs
+      - inuvika-ovd-shells
+      - inuvika-ovd-vnc-server
+      - xrdp
+      - xrdp-clipboard
+      - xrdp-printer
+      - xrdp-python
+      - xrdp-rdpdr
+      - xrdp-scim
+      - xrdp-seamrdp
+      - xrdp-sound
+      - gtk3-engines-xfce
+      update_cache: yes
+      cache_valid_time: 259200
+      state: latest
+
+  - name: Uninstall xscreensaver
+    apt:
+      name: 
+      - xscreensaver
+      - xscreensaver-data
+      state: absent
+      purge: yes
+
+- when: ansible_os_family == 'RedHat'
+  block:
+  - name: Install Ansible Dependencies
+    yum:
+      name: libselinux-python
+      state: present
+  
+  - name: Disable SELinux
+    selinux:
+      state: disabled
+    when: ovd_disable_selinux|bool
+  
+  - name: Install Cups and Samba
+    yum:
+      name:
+      - cups
+      - samba
+      state: present
+    when: ansible_distribution_major_version == "7"
+  
+  - name: Ensure Cups and Samba are started
+    service:
+      name: "{{ item }}"
+      state: started
+      enabled: yes
+    with_items:
+      - cups
+      - smb
+  
+  - name: Install OVD Linux Application Server
+    yum:
+      name:
+      - inuvika-ovd-slaveserver-role-aps
+      - inuvika-ovd-desktop
+      - inuvika-ovd-desktop-gtk-theme
+      - inuvika-ovd-externalapps-client
+      - inuvika-ovd-logout-dialog
+      - inuvika-ovd-regular-union-fs
+      - inuvika-ovd-shells
+      - inuvika-ovd-vnc-server
+      - xrdp
+      - xrdp-clipboard
+      - xrdp-printer
+      - xrdp-python
+      - xrdp-rdpdr
+      - xrdp-scim
+      - xrdp-seamrdp
+      - xrdp-sound
+      state: latest
+
+- name: Update Slaveserver Roles
+  ovd_slaveserver_role:
+    dest: /etc/ovd/slaveserver/slaveserver.conf
+    name: ApplicationServer
+    state: present
+  notify:
+    - Restart OVD Slaveserver
+
+- name: Configure Ovd Application Server
+  ini_file:
+    path: /etc/ovd/slaveserver/slaveserver.conf
+    section: ApplicationServer
+    option: '{{ item.option }}'
+    value: '{{ lookup("vars", item.value, default="") }}'
+    state: '{{ "absent" if lookup("vars", item.value, default="") == "" else "present" }}'
+    mode: 0644
+  notify:
+    - Restart OVD Slaveserver
+  with_items:
+    - { option: thread_count, value: ovd_as_thread_count }
+    - { option: checkShell, value: ovd_as_check_shell }
+    - { option: linux_icon_theme, value: ovd_as_linux_icon_theme }
+    - { option: linux_skel_directory, value: ovd_as_linux_skel_directory }
+    - { option: linux_fuse_group, value: ovd_as_linux_fuse_group }
+    - { option: override_password_method, value: ovd_as_override_password_method }
+    - { option: override_password_repository, value: ovd_as_override_password_repository }
+    - { option: disable_autostart, value: ovd_as_disable_autostart }
+    - { option: disconnection_delay, value: ovd_as_disconnection_delay }
+
+- name: Ensure OVD Slaveserver is started
+  service:
+    name: ovd-slaveserver
+    state: started
+    enabled: yes
+    pattern: "ovd-slaveserver --daemonize"
+
+- name: Create GTK3 folders
+  file:
+    name: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/xdg/gtk-3.0
+    - /usr/share/themes/Xfce/gtk-3.0
+
+- name: Create GTK3 Settings
+  template:
+    dest: /etc/xdg/gtk-3.0/settings.ini
+    src: settings.ini
+
+- name: Create GTK3 Style
+  template:
+    dest: /usr/share/themes/Xfce/gtk-3.0/gtk.css
+    src: gtk.css

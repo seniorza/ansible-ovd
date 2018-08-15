@@ -1,0 +1,84 @@
+# Copyright (C) 2018 Inuvika Inc.
+# https://www.inuvika.com
+# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- name: Add the OS specific variables
+  include_vars: "{{ item }}"
+  with_items:
+    - "{{ ansible_os_family | lower }}.yml"
+    - "{{ ansible_distribution | lower }}.yml"
+    - "{{ ansible_os_family | lower }}{{ ansible_distribution_major_version }}.yml"
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_release | lower }}.yml"
+  failed_when: false
+  tags: [ovd, ovd-sm]
+
+- include_tasks: debian.yml
+  tags: [ovd, ovd-sm]
+  when: ansible_os_family == 'Debian'
+
+- include_tasks: redhat.yml
+  tags: [ovd, ovd-sm]
+  when: ansible_os_family == 'RedHat'
+
+- name: Enable Apache
+  service:
+    name: '{{ apache_service_name }}'
+    state: started
+    enabled: yes
+  ignore_errors: true
+  tags: [ovd, ovd-sm]
+
+- name: Configure Session Manager
+  template:
+    src: config.inc.php
+    dest: /etc/ovd/session-manager/config.inc.php
+    owner: "{{ apache_user_name }}"
+    group: "{{ apache_group_name }}"
+    mode: 0644
+  tags: [ovd, ovd-sm]
+  notify:
+    - Configure Session Manager Database
+
+- name: Push the subscription key to the server
+  copy:
+    src: "{{ ovd_sm_subscription_key }}"
+    dest: "{{ ovd_sm_subscription_key_path }}"
+  tags: [ovd, ovd-sm]
+  when: ovd_sm_subscription_key is defined
+  notify:
+    - Install the subscription key on the server
+
+- name: Switch new server to production
+  sm_api:
+    user: "{{ ovd_sm_admin_login }}"
+    password: "{{ ovd_sm_admin_password }}"
+    autoprod: "{{ ovd_sm_register_in_production }}"
+  tags: [ovd, ovd-sm]
+  when: ovd_sm_register_in_production is defined
+
+- name: Register new server
+  sm_api:
+    user: "{{ ovd_sm_admin_login }}"
+    password: "{{ ovd_sm_admin_password }}"
+    autoregister: "{{ ovd_sm_register_new_servers }}"
+  tags: [ovd, ovd-sm]
+  when: ovd_sm_register_new_servers is defined
+
+- name: Switch Session Manager to production
+  sm_api:
+    maintenance: false
+    user: "{{ ovd_sm_admin_login }}"
+    password: "{{ ovd_sm_admin_password }}"
+  tags: [ovd, ovd-sm]

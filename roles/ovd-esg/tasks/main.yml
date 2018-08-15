@@ -1,0 +1,71 @@
+# Copyright (C) 2018 Inuvika Inc.
+# https://www.inuvika.com
+# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+- name: Add the OS specific variables
+  include_vars: '{{ ansible_os_family | lower }}.yml'
+  tags: [ovd, ovd-esg]
+
+- include_tasks: debian.yml
+  when: ansible_os_family == 'Debian'
+  tags: [ovd, ovd-esg]
+
+- include_tasks: redhat.yml
+  when: ansible_os_family == 'RedHat'
+  tags: [ovd, ovd-esg]
+
+- name: Ensure OVD Slaveserver is started
+  service:
+    name: ovd-slaveserver
+    state: started
+    enabled: yes
+    pattern: "ovd-slaveserver --daemonize"
+  tags: [ovd, ovd-esg]
+
+- name: Update Slaveserver Roles
+  ovd_slaveserver_role:
+    dest: /etc/ovd/slaveserver/slaveserver.conf
+    name: Gateway
+    state: present
+  notify:
+    - Restart OVD Slaveserver
+  tags: [ovd, ovd-esg]
+
+- name: Configure OVD Gateway
+  ini_file:
+    path: /etc/ovd/slaveserver/slaveserver.conf
+    section: Gateway
+    option: '{{ item.option }}'
+    value: '{{ lookup("vars", item.value, default="") }}'
+    state: '{{ "absent" if lookup("vars", item.value, default="") == "" else "present" }}'
+    mode: 0644
+  notify:
+    - Restart OVD Slaveserver
+  with_items:
+    - { option: web_client, value: ovd_webaccess_url }
+    - { option: admin_redirection, value: ovd_esg_admin_redirection }
+    - { option: ovd_esg_address, value: ovd_esg_address }
+    - { option: port, value: ovd_esg_port }
+    - { option: max_process, value: ovd_esg_max_process }
+    - { option: max_connection, value: ovd_esg_max_connection }
+    - { option: process_timeout, value: ovd_esg_process_timeout }
+    - { option: connection_timeout, value: ovd_esg_connection_timeout }
+    - { option: http_max_header_size, value: ovd_esg_http_max_header_size }
+    - { option: admin_redirection, value: ovd_esg_admin_redirection }
+    - { option: root_redirection, value: ovd_esg_root_redirection }
+    - { option: http_keep_alive, value: ovd_esg_http_keep_alive }
+    - { option: disable_sslv2, value: ovd_esg_disable_sslv2 }
+    - { option: force_buffering, value: ovd_esg_force_buffering }
+    - { option: token_expiration, value: ovd_esg_token_expiration }
