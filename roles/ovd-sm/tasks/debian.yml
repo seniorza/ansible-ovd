@@ -14,13 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-- name: Install MySQL and Python modules
+- name: Install MySQL
   apt:
     name:
-    - python-mysqldb
-    - python-soappy
     - mysql-server
     - "{{ php_package_prefix }}-cli"
+    state: present
+
+- name: Install MySQL Python 3 module
+  when: ansible_python_version.startswith("3.")
+  apt:
+    name: python3-mysqldb
+    state: present
+
+
+- name: Install MySQL Python 2 module
+  when: ansible_python_version.startswith("2.")
+  apt:
+    name: python-mysqldb
     state: present
 
 - name: Update MySQL Configuration

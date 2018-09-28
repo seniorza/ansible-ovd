@@ -17,4 +17,4 @@
 apache_service_name: apache2
 apache_user_name: www-data
 apache_group_name: www-data
-tomcat_service_name: tomcat7
+tomcat_service_name: tomcat8

@@ -16,13 +16,28 @@
 ---
 - when: ansible_os_family == 'Debian'
   block:
-  - name: Install Kernel header
+  - include_role:
+      name: oefenweb.locales
+
+  - name: Install Kernel header (Ubuntu <18)
     apt:
       name: linux-image-extra-{{ ansible_kernel }}
       update_cache: yes
       cache_valid_time: 259200
       state: latest
-    when: not(ansible_virtualization_type is defined and ansible_virtualization_type == 'lxc')
+    when:
+      - not(ansible_virtualization_type is defined and ansible_virtualization_type == 'lxc')
+      - ansible_distribution_release in ["trusty", "xenial"]
+
+  - name: Install Kernel header (Ubuntu >=18)
+    apt:
+      name: linux-modules-extra-{{ ansible_kernel }}
+      update_cache: yes
+      cache_valid_time: 259200
+      state: latest
+    when:
+      - not(ansible_virtualization_type is defined and ansible_virtualization_type == 'lxc')
+      - ansible_distribution_release == "bionic"
 
   - name: Install OVD Linux Application Server
     apt:
