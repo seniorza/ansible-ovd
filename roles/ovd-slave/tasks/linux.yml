@@ -24,7 +24,7 @@
     mode: 0644
   notify:
     - Restart Slaveserver
-  with_items:
+  loop:
     - { section: main, option: session_manager, value: ovd_session_manager }
     - { section: main, option: stop_timeout, value: ovd_slaveserver_stop_timeout }
     - { section: log, option: level, value: ovd_slaveserver_log_levels }

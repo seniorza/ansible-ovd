@@ -63,7 +63,7 @@
     mode: 0644
   notify:
     - Restart OVD Slaveserver
-  with_items:
+  loop:
     - { option: thread_count, value: ovd_fs_thread_count }
     - { option: user, value: ovd_fs_user }
     - { option: group, value: ovd_fs_group }

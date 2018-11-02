@@ -16,7 +16,7 @@
 ---
 - name: Add the OS specific variables
   include_vars: "{{ item }}"
-  with_items:
+  loop:
     - "{{ ansible_os_family | lower }}.yml"
     - "{{ ansible_distribution | lower }}.yml"
     - "{{ ansible_distribution | lower }}-{{ ansible_distribution_release | lower }}.yml"
