@@ -143,6 +143,9 @@
     pattern: "ovd-slaveserver --daemonize"
 
 - name: Apply "Linux Terminal preferences" KB
+  when:
+    - ansible_os_family == "Debian"
+    - ansible_distribution_release == "trusty"
   block:
     - name: Create GTK3 folders
       file:
