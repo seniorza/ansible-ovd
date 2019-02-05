@@ -38,6 +38,13 @@
     msg: "{{ ansible_architecture }} architecture is not supported"
   when: ansible_architecture not in ('x86_64', '64-bit')
 
+- name: Check the OS is UTF-8
+  when:
+    - ansible_system == "Linux"
+    - not ansible_env.LANG|regex_search("utf-?8$", ignorecase=True)
+  fail:
+    msg: "{{ inventory_hostname }} is not UTF-8 compatible"
+
 - include_tasks: debian.yml
   when: ansible_os_family == 'Debian'
   tags: [ovd]
