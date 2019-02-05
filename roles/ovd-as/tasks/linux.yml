@@ -16,9 +16,6 @@
 ---
 - when: ansible_os_family == 'Debian'
   block:
-  - include_role:
-      name: oefenweb.locales
-
   - name: Install Kernel header (Ubuntu <18)
     apt:
       name: linux-image-extra-{{ ansible_kernel }}
