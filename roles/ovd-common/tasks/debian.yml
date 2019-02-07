@@ -25,12 +25,12 @@
 - name: Install required gpg
   apt:
     name: gnupg
+    update_cache: yes
     state: present
 
 - name: Add HTTPS support for apt
   apt:
     name: apt-transport-https
-    update_cache: yes
     state: present
 
 - name: Install OVD Keyring
