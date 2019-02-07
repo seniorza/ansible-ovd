@@ -53,7 +53,7 @@
     mode: 0644
   notify:
     - Restart OVD Slaveserver
-  with_items:
+  loop:
     - { option: web_client, value: ovd_webaccess_url }
     - { option: admin_redirection, value: ovd_esg_admin_redirection }
     - { option: ovd_esg_address, value: ovd_esg_address }

@@ -96,7 +96,7 @@
       name: "{{ item }}"
       state: started
       enabled: yes
-    with_items:
+    loop:
       - cups
       - smb
   
@@ -139,7 +139,7 @@
     mode: 0644
   notify:
     - Restart OVD Slaveserver
-  with_items:
+  loop:
     - { option: thread_count, value: ovd_as_thread_count }
     - { option: checkShell, value: ovd_as_check_shell }
     - { option: linux_icon_theme, value: ovd_as_linux_icon_theme }
@@ -161,7 +161,7 @@
   file:
     name: "{{ item }}"
     state: directory
-  with_items:
+  loop:
     - /etc/xdg/gtk-3.0
     - /usr/share/themes/Xfce/gtk-3.0
 
