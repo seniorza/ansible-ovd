@@ -103,6 +103,15 @@
   notify:
     - Restart OVD Windows Application Server
 
+- name: Configure the Windows VFS
+  win_lineinfile:
+    path: '%ProgramData%\OVD\slaveserver\default.conf'
+    regexp: '^union\s?='
+    line: union = configuration, volatile, extravolatile, data
+    insertafter: '^\[\s*main\s*\]'
+  tags: [ovd, ovd-as]
+  when: ovd_version_detected is version('2.6.1', '>=') and ovd_version_detected is version('2.6.2', '<=')
+
 - name: Ensure OVD service is started
   win_service:
     name: OVD
