@@ -69,12 +69,21 @@
     dest: '%TEMP%\{{ oas_setup_filename.result }}'
     force: no
   tags: [ovd, ovd-as]
-  notify:
-    - Install Inuvika certificate as a trusted publisher
-    - Install OVD Windows Application Server
-    - Reconfigure Session Manager
-    - Reconfigure Logs
-    - Restart OVD Windows Application Server
+  register: woas_downloaded
+
+- name: Install OVD Windows Application Server
+  when: woas_downloaded.changed
+  tags: [ovd, ovd-as]
+  block:
+    - name: Install Inuvika certificate as a trusted publisher
+      raw: >
+        [System.IO.File]::WriteAllBytes("${Env:TEMP}\ovd.cer", (Get-AuthenticodeSignature "${Env:TEMP}\{{ oas_setup_filename.result }}").SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));
+        certutil -addstore -f TrustedPublisher ${Env:TEMP}\ovd.cer;
+        del ${Env:TEMP}\ovd.cer
+
+    - name: Install OVD Windows Application Server
+      raw: >
+        cd "${Env:TEMP}"; .\{{ oas_setup_filename.result }} /S
 
 - name: Configure Session Manager
   win_regedit:
@@ -99,7 +108,6 @@
     name: OVD
     state: started
   tags: [ovd, ovd-as]
-  ignore_errors: yes
 
 - name: Add a Scheduler to restart the Windows Font Cache Service
   win_scheduled_task:
