@@ -176,3 +176,14 @@
       template:
         dest: /usr/share/themes/Xfce/gtk-3.0/gtk.css
         src: gtk.css
+
+- name: Apply "User Isolation" KB
+  when: ovd_as_isolation is defined and ovd_as_isolation|bool==true
+  block:
+    - name: Users can list /home
+      file:
+        path: /home
+        state: directory
+        mode: "u=rwx,g=rx,o=x"
+        owner: root
+        group: root

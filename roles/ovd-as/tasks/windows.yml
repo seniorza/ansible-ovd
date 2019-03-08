@@ -132,3 +132,24 @@
     state: present
     user: SYSTEM
   ignore_errors: yes
+
+- name: Apply "User Isolation" KB
+  when: ovd_as_isolation is defined and ovd_as_isolation|bool==true
+  block:
+    - name: Prevent OVDUsers to write in C:\
+      win_acl:
+        path: C:\
+        user: "OVDUsers"
+        type: deny
+        rights: CreateDirectories, Write
+        state: present
+        propagation: None
+
+    - name: Prevent OVDUsers to list in C:\Users
+      win_acl:
+        path: C:\Users
+        user: "OVDUsers"
+        type: deny
+        rights: ListDirectory
+        state: present
+        propagation: None
