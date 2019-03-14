@@ -35,9 +35,25 @@
   when: install_rds.restart_needed
 
 - name: Configure RDS
-  raw: >
-    (Get-WmiObject Win32_TerminalServiceSetting -Namespace root\cimv2\TerminalServices).SetAllowTsConnections(1,1);
-    (Get-WmiObject -Class "Win32_TSGeneralSetting" -Namespace root\cimv2\TerminalServices -Filter "TerminalName='RDP-tcp'").SetUserAuthenticationRequired({{ '1' if ovd_version_detected is version('2.6', '>=') else '0' }})
+  win_shell: |
+    echo "nothing"
+
+    $wmi_rds = (Get-WmiObject Win32_TerminalServiceSetting -Namespace root\cimv2\TerminalServices)
+    if ($wmi_rds.AllowTsConnections -ne "1") {
+      echo "Set AllowTsConnections to 1"
+      $wmi_rds.SetAllowTsConnections(1,1);
+    }
+
+    $expected = {{ '1' if ovd_version_detected is version('2.6', '>=') else '0' }}
+
+    $wmi_rdp = (Get-WmiObject -Class "Win32_TSGeneralSetting" -Namespace root\cimv2\TerminalServices -Filter "TerminalName='RDP-tcp'")
+
+    if ($wmi_rdp.UserAuthenticationRequired -ne $expected) {
+      echo "Set UserAuthenticationRequired to $expected"
+      $wmi_rdp.SetUserAuthenticationRequired($expected);
+    }
+  register: result
+  changed_when: result.stdout_lines[-1] != "nothing"
 
 - name: Set RDP User Authentication Level
   win_regedit:
