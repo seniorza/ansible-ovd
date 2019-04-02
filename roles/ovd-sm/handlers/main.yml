@@ -20,7 +20,7 @@
     dest: /var/spool/ovd/session-manager/config
     owner: '{{ apache_user_name }}'
     group: '{{ apache_group_name }}'
-    mode: 0644
+    mode: 0640
   notify:
     - Setup Session Manager
   tags: [ovd, ovd-sm]

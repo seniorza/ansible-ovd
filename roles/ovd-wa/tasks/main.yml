@@ -37,7 +37,7 @@
     dest: /etc/ovd/web-access/config.inc.php
     owner: "{{ apache_user_name }}"
     group: "{{ apache_group_name }}"
-    mode: 0644
+    mode: 0640
   tags: [ovd, ovd-wa]
 
 - name: Ensure Tomcat is started
