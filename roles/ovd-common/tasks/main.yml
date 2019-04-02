@@ -14,6 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+- when: ovd_best_practices is defined and ovd_best_practices|bool==true
+  set_fact:
+    ovd_as_isolation: true
+
 - name: Detect Ovd Windows Application setup URL
   local_action: get_windows_aps_url ovd_url="{{ ovd_repo }}"
   vars:
