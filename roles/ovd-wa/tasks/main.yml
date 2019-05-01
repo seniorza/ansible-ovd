@@ -54,6 +54,13 @@
     enabled: yes
   tags: [ovd, ovd-wa]
 
+- name: Enable PHP-FPM
+  when: ovd_version_detected is version('2.8', '>=')
+  service:
+    name: '{{ fpm_service_name }}'
+    state: started
+    enabled: yes
+
 - name: Enable Apache
   service:
     name: "{{ apache_service_name }}"

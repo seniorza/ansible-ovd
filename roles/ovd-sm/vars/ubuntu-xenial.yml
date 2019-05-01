@@ -1,6 +1,6 @@
-# Copyright (C) 2018 Inuvika Inc.
+# Copyright (C) 2019 Inuvika Inc.
 # https://www.inuvika.com
-# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
+# Author Julien Langlois <j.langlois@inuvika.com> 2019
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-fpm_service_name: php-fpm
-apache_service_name: httpd
-apache_user_name: apache
-apache_group_name: apache
+fpm_service_name: php7.0-fpm
