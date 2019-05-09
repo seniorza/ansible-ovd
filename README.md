@@ -26,7 +26,7 @@ The roles support the following servers:
 * Windows Server 2012 R2
 
 Please ensure the virtual machine on which you are installing OVD meets the system requirements
-outlined in the [installation documentation](https://archive.inuvika.com/ovd/latest/documentation/Inuvika-OVD-Installation_and_Configuration_Guide.html)
+outlined in the *Installation and Configuration Guide* available on the [Inuvika OVD documentation page](https://support.inuvika.com/portal/kb/articles/documentation).
 
 ### Exceptions
 
@@ -71,6 +71,14 @@ cd ansible-ovd
 pip install --user -r requirements.pip
 ```
 
+## Version code
+
+Throughout this document, download links will use a version code specific to the version
+of OVD you are using.
+
+You will find the *version code* on the [Inuvika OVD supported versions page](https://support.inuvika.com/portal/kb/articles/documentation).
+You may also [contact Inuvika](https://www.inuvika.com/contact-us/) to request the code.
+
 ## Install and Manage your Inuvika OVD Enterprise farm
 
 1. Copy or rename the example folder to a custom name and cd to this folder
@@ -82,6 +90,9 @@ pip install --user -r requirements.pip
 
       To generate ssh keys, use the command `ssh-keygen` and copy the contents of the generated `.pub` file
       to the Linux servers in `~root/.ssh/authorized_keys` and `sudo chmod 600 ~root/.ssh/authorized_keys`.
+
+   * In the *inventory.cfg* file, replace `{VERSION_CODE}` with the *version code* as described
+     in the [Version code section](#version-code "Version Code").
 
    * In the section `[all]` add all your machines with:
 
