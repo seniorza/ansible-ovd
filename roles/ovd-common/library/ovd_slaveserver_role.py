@@ -21,7 +21,8 @@ import os
 
 def run(cmd):
 	p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-	return p.stdout.read().strip()
+	data = p.stdout.read().strip()
+	return data.decode("utf-8")
 
 def main():
 	# Module settings

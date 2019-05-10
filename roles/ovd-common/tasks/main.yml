@@ -14,6 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+- when: ovd_best_practices is defined and ovd_best_practices|bool==true
+  set_fact:
+    ovd_as_isolation: true
+
 - name: Detect Ovd Windows Application setup URL
   local_action: get_windows_aps_url ovd_url="{{ ovd_repo }}"
   vars:
@@ -31,7 +35,7 @@
 - name: Check OVD version
   fail:
     msg: "{{ ovd_version_detected }} is not supported"
-  when: ovd_version_detected is version('2.4', '<') or ovd_version_detected is version('2.7', '>=')
+  when: ovd_version_detected is version('2.4', '<') or ovd_version_detected is version('2.8', '>=')
 
 - name: Check that the OS is x86_64
   fail:

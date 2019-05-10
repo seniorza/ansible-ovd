@@ -69,12 +69,21 @@
     dest: '%TEMP%\{{ oas_setup_filename.result }}'
     force: no
   tags: [ovd, ovd-as]
-  notify:
-    - Install Inuvika certificate as a trusted publisher
-    - Install OVD Windows Application Server
-    - Reconfigure Session Manager
-    - Reconfigure Logs
-    - Restart OVD Windows Application Server
+  register: woas_downloaded
+
+- name: Install OVD Windows Application Server
+  when: woas_downloaded.changed
+  tags: [ovd, ovd-as]
+  block:
+    - name: Install Inuvika certificate as a trusted publisher
+      raw: >
+        [System.IO.File]::WriteAllBytes("${Env:TEMP}\ovd.cer", (Get-AuthenticodeSignature "${Env:TEMP}\{{ oas_setup_filename.result }}").SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));
+        certutil -addstore -f TrustedPublisher ${Env:TEMP}\ovd.cer;
+        del ${Env:TEMP}\ovd.cer
+
+    - name: Install OVD Windows Application Server
+      raw: >
+        cd "${Env:TEMP}"; .\{{ oas_setup_filename.result }} /S
 
 - name: Configure Session Manager
   win_regedit:
@@ -94,12 +103,20 @@
   notify:
     - Restart OVD Windows Application Server
 
+- name: Configure the Windows VFS
+  win_lineinfile:
+    path: '%ProgramData%\OVD\slaveserver\default.conf'
+    regexp: '^union\s?='
+    line: union = configuration, volatile, extravolatile, data
+    insertafter: '^\[\s*main\s*\]'
+  tags: [ovd, ovd-as]
+  when: ovd_version_detected is version('2.6.1', '>=') and ovd_version_detected is version('2.6.2', '<=')
+
 - name: Ensure OVD service is started
   win_service:
     name: OVD
     state: started
   tags: [ovd, ovd-as]
-  ignore_errors: yes
 
 - name: Add a Scheduler to restart the Windows Font Cache Service
   win_scheduled_task:
@@ -115,3 +132,24 @@
     state: present
     user: SYSTEM
   ignore_errors: yes
+
+- name: Apply "User Isolation" KB
+  when: ovd_as_isolation is defined and ovd_as_isolation|bool==true
+  block:
+    - name: Prevent OVDUsers to write in C:\
+      win_acl:
+        path: C:\
+        user: "OVDUsers"
+        type: deny
+        rights: CreateDirectories, Write
+        state: present
+        propagation: None
+
+    - name: Prevent OVDUsers to list in C:\Users
+      win_acl:
+        path: C:\Users
+        user: "OVDUsers"
+        type: deny
+        rights: ListDirectory
+        state: present
+        propagation: None

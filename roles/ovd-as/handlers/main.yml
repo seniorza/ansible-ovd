@@ -14,38 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-- name: Install Inuvika certificate as a trusted publisher
-  raw: >
-    [System.IO.File]::WriteAllBytes("${Env:TEMP}\ovd.cer", (Get-AuthenticodeSignature "${Env:TEMP}\{{ oas_setup_filename.result }}").SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));
-    certutil -addstore -f TrustedPublisher ${Env:TEMP}\ovd.cer;
-    del ${Env:TEMP}\ovd.cer
-
-- name: Install OVD Windows Application Server
-  raw: >
-    cd "${Env:TEMP}"; .\{{ oas_setup_filename.result }} /S
-  notify:
-    - Reconfigure Session Manager
-    - Reconfigure Logs
-  tags: [ovd, ovd-as]
-
-- name: Reconfigure Session Manager
-  win_regedit:
-    key: HKLM:\SOFTWARE\OVD\SlaveServer
-    value: session_manager
-    data: "{{ ovd_session_manager }}"
-  notify:
-    - Restart OVD Windows Application Server
-  tags: [ovd, ovd-as]
-
-- name: Reconfigure Logs
-  win_regedit:
-    key: HKLM:\SOFTWARE\OVD\SlaveServer\log
-    value: level
-    data: "{{ ovd_slaveserver_log_levels }}"
-  notify:
-    - Restart OVD Windows Application Server
-  tags: [ovd, ovd-as]
-
 - name: Restart OVD Windows Application Server
   win_service:
     name: OVD
