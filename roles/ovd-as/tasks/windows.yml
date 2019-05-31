@@ -32,7 +32,7 @@
 
 - name: Reboot after RDS install
   win_reboot:
-  when: install_rds.restart_needed
+  when: install_rds.reboot_required
 
 - name: Configure RDS
   win_shell: |
