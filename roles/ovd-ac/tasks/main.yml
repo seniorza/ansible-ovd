@@ -16,6 +16,11 @@
 ---
 - name: Add the OS specific variables
   include_vars: '{{ ansible_os_family | lower }}.yml'
+  loop:
+    - "{{ ansible_os_family | lower }}.yml"
+    - "{{ ansible_distribution | lower }}.yml"
+    - "{{ ansible_distribution | lower }}-{{ ansible_distribution_release | lower }}.yml"
+  failed_when: false
   tags: [ovd, ovd-as]
 
 - include_tasks: debian.yml
@@ -34,6 +39,13 @@
     group: '{{ apache_group_name }}'
     mode: 0640
   tags: [ovd, ovd-as]
+
+- name: Enable PHP-FPM
+  when: ovd_version_detected is version('2.8', '>=')
+  service:
+    name: '{{ fpm_service_name }}'
+    state: started
+    enabled: yes
 
 - name: Enable Apache
   service:
