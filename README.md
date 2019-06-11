@@ -31,23 +31,12 @@ outlined in the *Installation and Configuration Guide* available on the [Inuvika
 
 ### Exceptions
 
-* CentOS 6.x and Red Hat Enterprise Linux 6.x
-
-   Inuvika's support of this system family was dropped in OVD 2.5.
-   The roles do not support installation on el6.
-
 * Windows Server 2008 R2
 
    Inuvika officially supports 2008 R2 but the roles do not.
    Ansible requires a minimum version of PowerShell that 2008 R2
    does not provide. Customers wishing to deploy 2008 R2 will have
    to manually configure their Windows application servers.
-
-* OVD 2.4.1 on Windows Servers
-
-   Inuvika will continue to support OVD 2.4.1 until February 2019.
-   Customers wishing to install a fresh instance of OVD 2.4.1 after
-   December 2017 should note the special installation steps that are required.
 
 ## Install Ansible and Inuvika OVD roles
 
