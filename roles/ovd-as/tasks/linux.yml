@@ -60,6 +60,15 @@
       cache_valid_time: 259200
       state: latest
 
+  - name: Install OVD Linux Application Server
+    when: ovd_version_detected is version('2.6', '>=')
+    apt:
+      name:
+      - xrdp-ibus
+      update_cache: yes
+      cache_valid_time: 259200
+      state: latest
+
   - name: Uninstall xscreensaver
     apt:
       name: 
@@ -116,6 +125,13 @@
       - xrdp-scim
       - xrdp-seamrdp
       - xrdp-sound
+      state: latest
+
+  - name: Install OVD Linux Application Server
+    when: ovd_version_detected is version('2.6', '>=')
+    yum:
+      name:
+      - xrdp-ibus
       state: latest
 
 - name: Update Slaveserver Roles
