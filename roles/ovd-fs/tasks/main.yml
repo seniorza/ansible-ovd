@@ -33,7 +33,7 @@
     option: acl allow execute always
     value: True
   tags: [ovd, ovd-fs]
-  when: ovd_allow_execute|bool and (ansible_os_family != 'RedHat' or ansible_distribution_major_version != '6')
+  when: ovd_allow_execute|bool
   notify:
     - Restart Samba
 

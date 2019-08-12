@@ -24,7 +24,6 @@
     yum:
       name: "{{ epel7_url }}"
       state: present
-  when: ansible_distribution_major_version == '7'
 
 - block:
   - name: Install the subscription-manager package
@@ -33,7 +32,7 @@
       state: present
   - name: Enable the Optional Repository Channel
     command: subscription-manager repos --enable=rhel-7-server-optional-rpms
-  when: ansible_distribution_major_version == '7' and ansible_distribution in ['RedHat', 'Red Hat Enterprise Linux']
+  when: ansible_distribution in ['RedHat', 'Red Hat Enterprise Linux']
 
 - name: Add OVD Repository
   yum_repository:
