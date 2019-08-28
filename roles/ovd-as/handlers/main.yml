@@ -18,7 +18,6 @@
   win_service:
     name: OVD
     state: restarted
-    start_mode: auto
   tags: [ovd, ovd-as]
 
 - name: Restart OVD Slaveserver
