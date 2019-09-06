@@ -15,7 +15,8 @@
 # limitations under the License.
 ---
 - name: Check the OS version
-  fail:
+  assert:
+    that:
+      - ansible_os_name|regex_search("Server (2016|2012 R2)")
+      - not ansible_os_name|regex_search("Server 2016") or ovd_version_detected is version('2.5', '>=')
     msg: "{{ ansible_os_name }} is not supported by OVD"
-  when: (ansible_os_name is not search("Server 2016") and ansible_os_name is not search("Server 2012 R2")) or
-        (ansible_os_name is not search("Server 2016") and ovd_version_detected is version('2.5', '<'))
