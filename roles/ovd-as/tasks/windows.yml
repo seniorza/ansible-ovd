@@ -15,6 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+
+- name: Verify "ovd_as_setup_type" parameter validity
+  assert:
+    that:
+      - ovd_as_setup_type is defined
+      - ovd_as_setup_type in ("exe", "msi")
+
 - name: Enable audio service
   win_service:
     name: Audiosrv
@@ -84,13 +91,13 @@
 
 - name: Download OVD Windows Application Server
   win_get_url:
-    url: '{{ ovd_repo }}/{{ oas_setup_base }}.exe'
-    dest: '%TEMP%\{{ oas_setup_base }}.exe'
+    url: '{{ ovd_repo }}/{{ oas_setup_base }}.{{ ovd_as_setup_type }}'
+    dest: '%TEMP%\{{ oas_setup_base }}.{{ ovd_as_setup_type }}'
     force: no
   tags: [ovd, ovd-as]
 
 - name: Extract the certificate from the Inuvika setup
-  win_shell: "[System.IO.File]::WriteAllBytes('{{ oas_setup_base }}.cer', (Get-AuthenticodeSignature '{{ oas_setup_base }}.exe').SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));"
+  win_shell: "[System.IO.File]::WriteAllBytes('{{ oas_setup_base }}.cer', (Get-AuthenticodeSignature '{{ oas_setup_base }}.{{ ovd_as_setup_type }}').SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));"
   args:
     chdir: "{{ ansible_env.TEMP }}"
     creates: "{{ ansible_env.TEMP }}\\{{ oas_setup_base }}.cer"
@@ -102,11 +109,11 @@
     store_name: TrustedPublisher
   tags: [ovd, ovd-as]
 
-- name: Install OVD Windows Application Server
+- name: "Install OVD Windows Application Server ({{ ovd_as_setup_type }})"
   win_package:
-    path: "{{ ansible_env.TEMP }}\\{{ oas_setup_base }}.exe"
-    arguments: /S
-    product_id: Inuvika OVD Application Server
+    path: "{{ ansible_env.TEMP }}\\{{ oas_setup_base }}.{{ ovd_as_setup_type }}"
+    arguments: "{{ '/S' if ovd_as_setup_type == 'exe' else omit }}"
+    product_id: "{{ 'Inuvika OVD Application Server' if ovd_as_setup_type == 'exe' else omit }}"
     state: present
   tags: [ovd, ovd-as]
 
