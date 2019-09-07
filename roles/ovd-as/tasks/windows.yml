@@ -79,29 +79,32 @@
     data: "{{ 1 if ovd_version_detected is version('2.6', '>=') else 0 }}"
     type: dword
 
+- set_fact:
+    oas_setup_base: "{{ oas_setup_filename.result | splitext | first }}"
+
 - name: Download OVD Windows Application Server
   win_get_url:
-    url: '{{ ovd_repo }}/{{ oas_setup_filename.result }}'
-    dest: '%TEMP%\{{ oas_setup_filename.result }}'
+    url: '{{ ovd_repo }}/{{ oas_setup_base }}.exe'
+    dest: '%TEMP%\{{ oas_setup_base }}.exe'
     force: no
   tags: [ovd, ovd-as]
 
 - name: Extract the certificate from the Inuvika setup
-  win_shell: "[System.IO.File]::WriteAllBytes('{{ oas_setup_filename.result }}.cer', (Get-AuthenticodeSignature '{{ oas_setup_filename.result }}').SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));"
+  win_shell: "[System.IO.File]::WriteAllBytes('{{ oas_setup_base }}.cer', (Get-AuthenticodeSignature '{{ oas_setup_base }}.exe').SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));"
   args:
     chdir: "{{ ansible_env.TEMP }}"
-    creates: "{{ ansible_env.TEMP }}\\{{ oas_setup_filename.result }}.cer"
+    creates: "{{ ansible_env.TEMP }}\\{{ oas_setup_base }}.cer"
   tags: [ovd, ovd-as]
 
 - name: Install the Inuvika code-sign certificate as a trusted publisher
   win_certificate_store:
-    path: "{{ ansible_env.TEMP }}\\{{ oas_setup_filename.result }}.cer"
+    path: "{{ ansible_env.TEMP }}\\{{ oas_setup_base }}.cer"
     store_name: TrustedPublisher
   tags: [ovd, ovd-as]
 
 - name: Install OVD Windows Application Server
   win_package:
-    path: "{{ ansible_env.TEMP }}\\{{ oas_setup_filename.result }}"
+    path: "{{ ansible_env.TEMP }}\\{{ oas_setup_base }}.exe"
     arguments: /S
     product_id: Inuvika OVD Application Server
     state: present
