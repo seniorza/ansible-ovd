@@ -85,21 +85,27 @@
     dest: '%TEMP%\{{ oas_setup_filename.result }}'
     force: no
   tags: [ovd, ovd-as]
-  register: woas_downloaded
+
+- name: Extract the certificate from the Inuvika setup
+  win_shell: "[System.IO.File]::WriteAllBytes('{{ oas_setup_filename.result }}.cer', (Get-AuthenticodeSignature '{{ oas_setup_filename.result }}').SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));"
+  args:
+    chdir: "{{ ansible_env.TEMP }}"
+    creates: "{{ ansible_env.TEMP }}\\{{ oas_setup_filename.result }}.cer"
+  tags: [ovd, ovd-as]
+
+- name: Install the Inuvika code-sign certificate as a trusted publisher
+  win_certificate_store:
+    path: "{{ ansible_env.TEMP }}\\{{ oas_setup_filename.result }}.cer"
+    store_name: TrustedPublisher
+  tags: [ovd, ovd-as]
 
 - name: Install OVD Windows Application Server
-  when: woas_downloaded.changed
+  win_package:
+    path: "{{ ansible_env.TEMP }}\\{{ oas_setup_filename.result }}"
+    arguments: /S
+    product_id: Inuvika OVD Application Server
+    state: present
   tags: [ovd, ovd-as]
-  block:
-    - name: Install Inuvika certificate as a trusted publisher
-      raw: >
-        [System.IO.File]::WriteAllBytes("${Env:TEMP}\ovd.cer", (Get-AuthenticodeSignature "${Env:TEMP}\{{ oas_setup_filename.result }}").SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));
-        certutil -addstore -f TrustedPublisher ${Env:TEMP}\ovd.cer;
-        del ${Env:TEMP}\ovd.cer
-
-    - name: Install OVD Windows Application Server
-      raw: >
-        cd "${Env:TEMP}"; .\{{ oas_setup_filename.result }} /S
 
 - name: Configure Session Manager
   win_regedit:
