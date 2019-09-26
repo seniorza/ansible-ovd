@@ -28,6 +28,14 @@
     start_mode: auto
     state: started
 
+- name: Wait for no scheduled tasks
+  win_shell: Get-ScheduledTask | Where TaskPath -like "*TaskScheduler*"
+  register: result
+  until: result.stdout.find("Running") == -1
+  retries: 30
+  delay: 10
+  changed_when: False
+
 - name: Install RDS
   win_feature:
     name: "RDS-RD-Server"
