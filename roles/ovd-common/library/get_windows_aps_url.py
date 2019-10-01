@@ -17,10 +17,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
+if sys.version_info.major >= 3:
+	from html.parser import HTMLParser
+else:
+	# Python 2
+	from HTMLParser import HTMLParser
+
 from ansible.module_utils.basic import AnsibleModule
-from HTMLParser import HTMLParser
 import os
-import urllib2
+import requests
 
 
 def main():
@@ -34,10 +40,9 @@ def main():
 
 	ovd_url = module.params["ovd_url"]
 
-	req = urllib2.Request(ovd_url)
-	stream = urllib2.urlopen(req)
+	req = requests.get(ovd_url)
 	parser = HTMLReadDir()
-	parser.feed(stream.read())
+	parser.feed(req.text)
 	
 	fname = None
 	for f in parser.files:
