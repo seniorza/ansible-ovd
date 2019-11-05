@@ -33,20 +33,23 @@
     msg: "Using OVD version {{ ovd_version_detected }}"
 
 - name: Check OVD version
-  fail:
+  assert:
+    that:
+      - ovd_version_detected is version('2.5', '>=')
+      - ovd_version_detected is version('2.8', '<')
     msg: "{{ ovd_version_detected }} is not supported"
-  when: ovd_version_detected is version('2.4', '<') or ovd_version_detected is version('2.8', '>=')
 
 - name: Check that the OS is x86_64
-  fail:
+  assert:
+    that:
+      - ansible_architecture in ('x86_64', '64-bit')
     msg: "{{ ansible_architecture }} architecture is not supported"
-  when: ansible_architecture not in ('x86_64', '64-bit')
 
 - name: Check the OS is UTF-8
-  when:
-    - ansible_system == "Linux"
-    - not ansible_env.LANG|regex_search("utf-?8$", ignorecase=True)
-  fail:
+  when: ansible_system == "Linux"
+  assert:
+    that:
+      - ansible_env.LANG|regex_search("utf-?8$", ignorecase=True)
     msg: "{{ inventory_hostname }} is not UTF-8 compatible"
 
 - include_tasks: debian.yml
