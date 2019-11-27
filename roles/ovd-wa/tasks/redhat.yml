@@ -21,5 +21,6 @@
     - inuvika-ovd-guacamole
     - inuvika-ovd-l10n
     - inuvika-ovd-web-access-ajaxplorer
+    - inuvika-php-tank
     state: latest
   tags: [ovd, ovd-wa]
