@@ -15,11 +15,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+
+- name: Verify "ovd_as_setup_type" parameter validity
+  assert:
+    that:
+      - ovd_as_setup_type is defined
+      - ovd_as_setup_type in ("exe", "msi")
+
 - name: Enable audio service
   win_service:
     name: Audiosrv
     start_mode: auto
     state: started
+
+- name: Wait for no scheduled tasks
+  win_shell: Get-ScheduledTask | Where TaskPath -like "*TaskScheduler*"
+  register: result
+  until: result.stdout.find("Running") == -1
+  retries: 30
+  delay: 10
+  changed_when: False
 
 - name: Install RDS
   win_feature:
@@ -79,27 +94,36 @@
     data: "{{ 1 if ovd_version_detected is version('2.6', '>=') else 0 }}"
     type: dword
 
+- set_fact:
+    oas_setup_base: "{{ oas_setup_filename.result | splitext | first }}"
+
 - name: Download OVD Windows Application Server
   win_get_url:
-    url: '{{ ovd_repo }}/{{ oas_setup_filename.result }}'
-    dest: '%TEMP%\{{ oas_setup_filename.result }}'
+    url: '{{ ovd_repo }}/{{ oas_setup_base }}.{{ ovd_as_setup_type }}'
+    dest: '%TEMP%\{{ oas_setup_base }}.{{ ovd_as_setup_type }}'
     force: no
   tags: [ovd, ovd-as]
-  register: woas_downloaded
 
-- name: Install OVD Windows Application Server
-  when: woas_downloaded.changed
+- name: Extract the certificate from the Inuvika setup
+  win_shell: "[System.IO.File]::WriteAllBytes('{{ oas_setup_base }}.cer', (Get-AuthenticodeSignature '{{ oas_setup_base }}.{{ ovd_as_setup_type }}').SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));"
+  args:
+    chdir: "{{ ansible_env.TEMP }}"
+    creates: "{{ ansible_env.TEMP }}\\{{ oas_setup_base }}.cer"
   tags: [ovd, ovd-as]
-  block:
-    - name: Install Inuvika certificate as a trusted publisher
-      raw: >
-        [System.IO.File]::WriteAllBytes("${Env:TEMP}\ovd.cer", (Get-AuthenticodeSignature "${Env:TEMP}\{{ oas_setup_filename.result }}").SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));
-        certutil -addstore -f TrustedPublisher ${Env:TEMP}\ovd.cer;
-        del ${Env:TEMP}\ovd.cer
 
-    - name: Install OVD Windows Application Server
-      raw: >
-        cd "${Env:TEMP}"; .\{{ oas_setup_filename.result }} /S
+- name: Install the Inuvika code-sign certificate as a trusted publisher
+  win_certificate_store:
+    path: "{{ ansible_env.TEMP }}\\{{ oas_setup_base }}.cer"
+    store_name: TrustedPublisher
+  tags: [ovd, ovd-as]
+
+- name: "Install OVD Windows Application Server ({{ ovd_as_setup_type }})"
+  win_package:
+    path: "{{ ansible_env.TEMP }}\\{{ oas_setup_base }}.{{ ovd_as_setup_type }}"
+    arguments: "{{ '/S' if ovd_as_setup_type == 'exe' else omit }}"
+    product_id: "{{ 'Inuvika OVD Application Server' if ovd_as_setup_type == 'exe' else omit }}"
+    state: present
+  tags: [ovd, ovd-as]
 
 - name: Configure Session Manager
   win_regedit:

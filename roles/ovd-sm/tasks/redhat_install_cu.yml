@@ -23,9 +23,10 @@
   notify:
     - Configure Session Manager Database
 
-- fail:
+- assert:
+    that:
+      - sm_install_result is not failed or ovd_sm_force_update|bool
     msg: Unable to install the Session Manager
-  when: sm_install_result is failed and not ovd_sm_force_update|bool
 
 - name: Switch Session Manager to maintenance and kill all sessions
   sm_api:

@@ -25,3 +25,5 @@ ovd_disable_selinux: true
 # ovd_as_override_password_repository: 
 # ovd_as_disable_autostart: imsettings-start
 # ovd_as_disconnection_delay: 4
+
+ovd_as_setup_type: exe # possible values: exe, msi

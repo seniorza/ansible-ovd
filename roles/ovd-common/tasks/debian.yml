@@ -15,12 +15,13 @@
 # limitations under the License.
 ---
 - name: Check the OS version
-  fail:
+  assert:
+    that:
+      - ansible_distribution_release in ('trusty', 'xenial', 'bionic')
+      - ansible_distribution_release != 'bionic' or ovd_version_detected is version('2.7', '>=')
+      - ansible_distribution_release != 'xenial' or ovd_version_detected is version('2.5', '>=')
+      - ansible_distribution_release != 'trusty' or ovd_version_detected is version('2.7', '<=')
     msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is not supported by OVD {{ ovd_version_detected }}"
-  when: (ansible_distribution_release not in ('trusty', 'xenial', 'bionic')) or
-        (ansible_distribution_release == 'bionic' and ovd_version_detected is version('2.7', '<')) or
-        (ansible_distribution_release == 'xenial' and ovd_version_detected is version('2.5', '<')) or
-        (ansible_distribution_release == 'trusty' and ovd_version_detected is version('2.7', '>'))
 
 - name: Install required gpg
   apt:
