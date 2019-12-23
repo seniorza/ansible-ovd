@@ -38,7 +38,9 @@
 
 - name: Update OVD Session Manager
   apt:
-    name: inuvika-ovd-session-manager
+    name:
+      - inuvika-ovd-session-manager
+      - inuvika-php-tank
     force: yes
     update_cache: yes
     cache_valid_time: 259200

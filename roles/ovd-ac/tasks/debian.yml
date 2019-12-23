@@ -19,6 +19,7 @@
     name: 
     - inuvika-ovd-administration-console
     - inuvika-ovd-l10n
+    - inuvika-php-tank
     - php-libchart
     force: yes
     update_cache: yes
