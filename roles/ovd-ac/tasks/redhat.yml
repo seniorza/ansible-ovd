@@ -19,5 +19,6 @@
     name:
     - inuvika-ovd-administration-console
     - inuvika-ovd-l10n
+    - inuvika-php-tank
     - php-libchart
     state: latest

@@ -21,6 +21,7 @@
     - inuvika-ovd-guacamole
     - inuvika-ovd-l10n
     - inuvika-ovd-web-access-ajaxplorer
+    - inuvika-php-tank
     force: yes
     update_cache: yes
     cache_valid_time: 259200
