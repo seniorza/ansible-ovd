@@ -23,6 +23,14 @@
   failed_when: false
   tags: [ovd, ovd-wa]
 
+- set_fact:
+    ovd_wa_packages:
+      - inuvika-ovd-web-access
+      - inuvika-ovd-guacamole
+      - inuvika-ovd-l10n
+      - inuvika-ovd-web-access-ajaxplorer
+      - inuvika-php-tank
+
 - include_tasks: debian.yml
   when: ansible_os_family == "Debian"
   tags: [ovd, ovd-wa]

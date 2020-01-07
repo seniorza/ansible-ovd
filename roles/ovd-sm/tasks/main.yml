@@ -24,6 +24,11 @@
   failed_when: false
   tags: [ovd, ovd-sm]
 
+- set_fact:
+    ovd_sm_packages:
+      - inuvika-ovd-session-manager
+      - inuvika-php-tank
+
 - include_tasks: debian.yml
   tags: [ovd, ovd-sm]
   when: ansible_os_family == 'Debian'

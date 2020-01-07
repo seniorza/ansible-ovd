@@ -16,7 +16,7 @@
 ---
 - name: Install OVD Session Manager
   yum:
-    name: inuvika-ovd-session-manager
+    name: "{{ ovd_sm_packages }}"
     state: latest
   register: sm_install_result
   ignore_errors: yes

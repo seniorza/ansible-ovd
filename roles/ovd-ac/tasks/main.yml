@@ -23,6 +23,13 @@
   failed_when: false
   tags: [ovd, ovd-as]
 
+- set_fact:
+    ovd_ac_packages:
+      - inuvika-ovd-administration-console
+      - inuvika-ovd-l10n
+      - inuvika-php-tank
+      - php-libchart
+
 - include_tasks: debian.yml
   tags: [ovd, ovd-as]
   when: ansible_os_family == 'Debian'

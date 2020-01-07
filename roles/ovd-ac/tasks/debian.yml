@@ -16,11 +16,7 @@
 ---
 - name: Install Ovd Administration Console
   apt:
-    name: 
-    - inuvika-ovd-administration-console
-    - inuvika-ovd-l10n
-    - inuvika-php-tank
-    - php-libchart
+    name: "{{ ovd_ac_packages }}"
     force: yes
     update_cache: yes
     cache_valid_time: 259200

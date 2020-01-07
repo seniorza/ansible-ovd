@@ -16,9 +16,5 @@
 ---
 - name: Install Ovd Administration Console
   yum:
-    name:
-    - inuvika-ovd-administration-console
-    - inuvika-ovd-l10n
-    - inuvika-php-tank
-    - php-libchart
+    name: "{{ ovd_ac_packages }}"
     state: latest
