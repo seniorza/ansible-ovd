@@ -17,3 +17,6 @@
 ovd_version: '{VERSION_CODE}'
 ovd_repo: http://archive.inuvika.com/ovd/{{ ovd_version }}
 epel7_url: https://download.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+ovd_www_config: "apache-mod"
+# Allowed values: apache-mod, apache-fpm

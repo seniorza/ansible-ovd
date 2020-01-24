@@ -16,12 +16,7 @@
 ---
 - name: Install OVD Web Access
   apt:
-    name:
-    - inuvika-ovd-web-access
-    - inuvika-ovd-guacamole
-    - inuvika-ovd-l10n
-    - inuvika-ovd-web-access-ajaxplorer
-    - inuvika-php-tank
+    name: "{{ ovd_wa_packages }}"
     force: yes
     update_cache: yes
     cache_valid_time: 259200

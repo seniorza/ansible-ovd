@@ -24,6 +24,14 @@
   failed_when: false
   tags: [ovd, ovd-sm]
 
+- set_fact:
+    ovd_sm_packages:
+      - inuvika-ovd-session-manager
+      - inuvika-php-tank
+
+- when: ovd_version_detected is version('2.8', '>=')
+  set_fact: ovd_sm_packages="{{ovd_sm_packages}} + [ 'inuvika-ovd-www-{{ ovd_www_config }}' ]"
+
 - include_tasks: debian.yml
   tags: [ovd, ovd-sm]
   when: ansible_os_family == 'Debian'
@@ -33,7 +41,9 @@
   when: ansible_os_family == 'RedHat'
 
 - name: Enable PHP-FPM
-  when: ovd_version_detected is version('2.8', '>=')
+  when:
+    - ovd_version_detected is version('2.8', '>=')
+    - ovd_www_config == 'apache-fpm'
   service:
     name: '{{ fpm_service_name }}'
     state: started
