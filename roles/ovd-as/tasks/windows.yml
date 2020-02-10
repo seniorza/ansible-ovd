@@ -193,3 +193,27 @@
         rights: ListDirectory
         state: present
         propagation: None
+
+- name: Apply "Windows Security 2019" KB
+  vars:
+    winpath: 'C:\Windows\SystemApps\Microsoft.Windows.SecHealthUI_cw5n1h2txyewy\SecHealthUI.exe'
+  block:
+    - name: Check that the Windows Security application exists
+      win_stat:
+        path: "{{ winpath }}"
+      register: stat_file
+
+    - name: Takeown Windows Security application
+      when: stat_file.stat.exists == True
+      win_owner:
+        path: "{{ winpath }}"
+        user: Administrator
+
+    - name: Remove "Execute" ACL from Users
+      when: stat_file.stat.exists == True
+      win_acl:
+        path: "{{ winpath }}"
+        user: "Users"
+        type: deny
+        rights: ExecuteFile
+        state: present
