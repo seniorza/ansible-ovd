@@ -176,7 +176,7 @@
 - name: Apply "User Isolation" KB
   when: ovd_as_isolation is defined and ovd_as_isolation|bool==true
   block:
-    - name: Prevent OVDUsers to write in C:\
+    - name: Apply "User Isolation" KB → Prevent OVDUsers to write in C:\
       win_acl:
         path: C:\
         user: "OVDUsers"
@@ -185,7 +185,7 @@
         state: present
         propagation: None
 
-    - name: Prevent OVDUsers to list in C:\Users
+    - name: Apply "User Isolation" KB → Prevent OVDUsers to list in C:\Users
       win_acl:
         path: C:\Users
         user: "OVDUsers"
@@ -193,3 +193,27 @@
         rights: ListDirectory
         state: present
         propagation: None
+
+- name: Apply "Windows Security 2019" KB
+  vars:
+    winpath: 'C:\Windows\SystemApps\Microsoft.Windows.SecHealthUI_cw5n1h2txyewy\SecHealthUI.exe'
+  block:
+    - name: Apply "Windows Security 2019" KB → Check that the Windows Security application exists
+      win_stat:
+        path: "{{ winpath }}"
+      register: stat_file
+
+    - name: Apply "Windows Security 2019" KB → Takeown Windows Security application
+      when: stat_file.stat.exists == True
+      win_owner:
+        path: "{{ winpath }}"
+        user: Administrator
+
+    - name: Apply "Windows Security 2019" KB → Remove "Execute" ACL from Users
+      when: stat_file.stat.exists == True
+      win_acl:
+        path: "{{ winpath }}"
+        user: "Users"
+        type: deny
+        rights: ExecuteFile
+        state: present
