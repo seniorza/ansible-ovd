@@ -18,7 +18,7 @@ ovd_allow_execute: true
 # ovd_fs_thread_count: auto
 # ovd_fs_user: ovd-fs
 # ovd_fs_group: ovd-fs
-# ovd_fs_data_dir: /var/lib/ovd/slaveserver/fs.real
+# ovd_fs_data_dir: /var/lib/ovd/slaveserver/fileserver-data
 # ovd_fs_backend: /etc/ovd/rufs/FSBackend.conf
 # ovd_fs_dav_user: www-data
 # ovd_fs_samba_group: sambashare

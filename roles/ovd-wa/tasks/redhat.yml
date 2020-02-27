@@ -16,11 +16,6 @@
 ---
 - name: Install OVD Web Access
   yum:
-    name:
-    - inuvika-ovd-web-access
-    - inuvika-ovd-guacamole
-    - inuvika-ovd-l10n
-    - inuvika-ovd-web-access-ajaxplorer
-    - inuvika-php-tank
+    name: "{{ ovd_wa_packages }}"
     state: latest
   tags: [ovd, ovd-wa]
