@@ -23,6 +23,7 @@ The roles support the following servers:
 * Ubuntu 18.04 LTS server (Bionic Beaver) 64 bits
 * Ubuntu 16.04 LTS server (Xenial Xerus) 64 bits
 * Ubuntu 14.04 LTS server (Trusty Tahr) 64 bits
+* Windows Server 2019 (available for OVD version 2.8+)
 * Windows Server 2016
 * Windows Server 2012 R2
 
@@ -33,7 +34,9 @@ outlined in the *Installation and Configuration Guide* available on the [Inuvika
 
 * Windows Server 2008 R2
 
-   Inuvika officially supports 2008 R2 but the roles do not.
+   While Inuvika officially supports Windows 2008 R2 for OVD versions 2.7.3 and
+   earlier, it is not available via Ansible.
+
    Ansible requires a minimum version of PowerShell that 2008 R2
    does not provide. Customers wishing to deploy 2008 R2 will have
    to manually configure their Windows application servers.
