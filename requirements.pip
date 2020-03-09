@@ -15,5 +15,4 @@
 # limitations under the License.
 
 ansible==2.8.5
-ntlm-auth==1.2.0
 pywinrm==0.3.0
