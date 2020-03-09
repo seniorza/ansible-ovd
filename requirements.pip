@@ -15,4 +15,4 @@
 # limitations under the License.
 
 ansible==2.8.5
-pywinrm==0.3.0
+pywinrm>=0.3.0
