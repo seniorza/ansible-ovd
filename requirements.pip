@@ -14,5 +14,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ansible==2.8.5
+ansible==2.9.9
 pywinrm>=0.3.0
