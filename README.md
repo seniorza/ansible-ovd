@@ -27,8 +27,8 @@ The roles support the following servers:
 * Windows Server 2016
 * Windows Server 2012 R2
 
-Please ensure the virtual machine on which you are installing OVD meets the system requirements
-outlined in the *Installation and Configuration Guide* available on the [Inuvika OVD documentation page](https://support.inuvika.com/portal/kb/articles/documentation).
+Please ensure the virtual machine on which you are installing OVD meets the
+system requirements outlined in the [Installation and Configuration Guide](https://docs.inuvika.com/installation_and_configuration_guide/).
 
 ### Exceptions
 
