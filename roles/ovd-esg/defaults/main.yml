@@ -15,7 +15,7 @@
 # limitations under the License.
 ---
 ovd_default_webaccess: 127.0.0.1
-ovd_webaccess_url: http://{{ ovd_default_webaccess }}/
+ovd_webaccess_url: "http://{{ ovd_default_webaccess }}/"
 # ovd_esg_address: 0.0.0.0
 # ovd_esg_port: 443
 # ovd_esg_max_process: 10
@@ -24,6 +24,7 @@ ovd_webaccess_url: http://{{ ovd_default_webaccess }}/
 # ovd_esg_connection_timeout: 10
 # ovd_esg_http_max_header_size: 2048
 ovd_esg_admin_redirection: false
+ovd_esg_admin_host: "{{ ovd_session_manager }}"
 ovd_esg_root_redirection: /ovd
 # ovd_esg_http_keep_alive: true
 # ovd_esg_disable_sslv2: false
