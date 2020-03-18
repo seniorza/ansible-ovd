@@ -217,3 +217,9 @@
         type: deny
         rights: ExecuteFile
         state: present
+
+- name: Install NFS Client
+  when: ovd_install_nfs is defined and ovd_install_nfs|bool==true
+  win_feature:
+    name: NFS-Client
+    state: present
