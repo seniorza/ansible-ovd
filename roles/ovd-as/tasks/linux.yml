@@ -248,3 +248,9 @@
   package:
     name: "{{ 'nfs-common' if ansible_os_family == 'Debian' else 'nfs-utils' }}"
     state: present
+
+- name: Install WebDAV Client
+  when: ovd_install_webdav is defined and ovd_install_webdav|bool==true
+  package:
+    name: davfs2
+    state: present
