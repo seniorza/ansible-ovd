@@ -242,3 +242,9 @@
         mode: "u=rwx,g=rx,o=x"
         owner: root
         group: root
+
+- name: Install NFS Client
+  when: ovd_install_nfs is defined and ovd_install_nfs|bool==true
+  package:
+    name: "{{ 'nfs-common' if ansible_os_family == 'Debian' else 'nfs-utils' }}"
+    state: present
