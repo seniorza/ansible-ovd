@@ -22,10 +22,14 @@
       - ansible_distribution_release != 'trusty' or ovd_version_detected is version('2.7', '<=')
     msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is not supported by OVD {{ ovd_version_detected }}"
 
+- name: Update APT cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 259200
+
 - name: Install required gpg
   apt:
     name: gnupg
-    update_cache: yes
     state: present
 
 - name: Add HTTPS support for apt

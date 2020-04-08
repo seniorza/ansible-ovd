@@ -17,6 +17,4 @@
 - name: Install OVD Gateway
   apt:
     name: inuvika-ovd-slaveserver-role-gateway
-    update_cache: yes
-    cache_valid_time: 259200
     state: latest

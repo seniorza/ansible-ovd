@@ -18,8 +18,6 @@
   apt:
     name: "{{ ovd_wa_packages }}"
     force: yes
-    update_cache: yes
-    cache_valid_time: 259200
     state: latest
   tags: [ovd, ovd-wa]
 

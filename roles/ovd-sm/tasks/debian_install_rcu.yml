@@ -23,8 +23,6 @@
   apt:
     name: "{{ ovd_sm_packages }}"
     force: yes
-    update_cache: yes
-    cache_valid_time: 259200
     state: latest
   notify:
     - Configure Session Manager Database
