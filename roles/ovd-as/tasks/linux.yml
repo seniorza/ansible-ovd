@@ -14,24 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+
+- name: Verify presence of nls_utf8
+  when:
+   - not(ansible_virtualization_type is defined and ansible_virtualization_type == 'lxc')
+   - ovd_as_verify_nls_utf8|bool
+  include_tasks: linux_verify_nls_utf8.yml
+
 - when: ansible_os_family == 'Debian'
   block:
-  - name: Install Kernel modules package
-    # We need the nls_utf8 module for SMB iocharset=utf-8 option
-    when: not(ansible_virtualization_type is defined and ansible_virtualization_type == 'lxc')
-    apt:
-      name: 'linux-{{ "image" if
-                    ansible_distribution_release == "trusty"
-                      or
-                    (
-                      ansible_distribution_release == "xenial"
-                        and
-                      ansible_kernel is version("4.4.0-144", "<=")
-                    )
-                else "modules"
-            }}-extra-{{ ansible_kernel }}'
-      state: latest
-
   - name: Install OVD Linux Application Server
     apt:
       name: 
