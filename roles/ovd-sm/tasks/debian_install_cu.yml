@@ -18,8 +18,6 @@
   apt:
     name: "{{ ovd_sm_packages }}"
     force: yes
-    update_cache: yes
-    cache_valid_time: 259200
     state: latest
   register: sm_install_result
   ignore_errors: "{{ ovd_sm_force_update }}"
@@ -40,8 +38,6 @@
   apt:
     name: "{{ ovd_sm_packages }}"
     force: yes
-    update_cache: yes
-    cache_valid_time: 259200
     state: latest
   when: sm_install_result is failed and ovd_sm_force_update|bool
   notify:
