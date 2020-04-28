@@ -47,6 +47,14 @@
   notify:
     - Configure Session Manager Database
 
+- name: "Workaround for php-imagick installation error in OVD <2.8.1 after EL7.8 release"
+  when:
+    - ovd_version_detected is version('2.8.1', '<')
+  yum:
+    name: http://mirror.centos.org/centos-7/7.7.1908/os/x86_64/Packages/ImageMagick-6.7.8.9-18.el7.x86_64.rpm
+    state: installed
+    allow_downgrade: yes
+
 - include_tasks: redhat_install_cu.yml
   when: not ovd_sm_remove_can_update|bool
 
