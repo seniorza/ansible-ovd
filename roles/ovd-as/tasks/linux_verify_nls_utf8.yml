@@ -1,0 +1,37 @@
+# Copyright (C) 2020 Inuvika Inc.
+# https://www.inuvika.com
+# Author Julien Langlois <j.langlois@inuvika.com> 2020
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+
+- name: "Verify presence of nls_utf8 : Search for kernel module"
+  find:
+    paths: "/lib/modules/{{ ansible_kernel }}/kernel/"
+    patterns: "nls_utf8.ko*"
+    recurse: yes
+  register: res_nls_mod_files
+
+- name: "Verify presence of nls_utf8 : Search for kernel *hard* module"
+  when: res_nls_mod_files.matched == 0
+  shell: grep -q nls_utf8 /proc/kallsyms
+  check_mode: no
+  register: res_nls_kernel
+  changed_when: false
+  failed_when: res_nls_kernel.rc not in [0, 1]
+
+- name: "Verify presence of nls_utf8 : Conclusion"
+  assert:
+    that:
+      - res_nls_mod_files.matched == 1 or res_nls_kernel.rc == 0
+    msg: The "nls_utf8" kernel module is not installed - OVD requires this module to continue

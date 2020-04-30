@@ -14,24 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+
+- name: Verify presence of nls_utf8
+  when:
+   - not(ansible_virtualization_type is defined and ansible_virtualization_type == 'lxc')
+   - ovd_as_verify_nls_utf8|bool
+  include_tasks: linux_verify_nls_utf8.yml
+
 - when: ansible_os_family == 'Debian'
   block:
-  - name: Install Kernel header (Ubuntu <18)
-    apt:
-      name: linux-image-extra-{{ ansible_kernel }}
-      state: latest
-    when:
-      - not(ansible_virtualization_type is defined and ansible_virtualization_type == 'lxc')
-      - ansible_distribution_release in ["trusty", "xenial"]
-
-  - name: Install Kernel header (Ubuntu >=18)
-    apt:
-      name: linux-modules-extra-{{ ansible_kernel }}
-      state: latest
-    when:
-      - not(ansible_virtualization_type is defined and ansible_virtualization_type == 'lxc')
-      - ansible_distribution_release == "bionic"
-
   - name: Install OVD Linux Application Server
     apt:
       name: 
