@@ -207,7 +207,7 @@
       when: stat_file.stat.exists == True
       win_owner:
         path: "{{ winpath }}"
-        user: Administrator
+        user: "{{ ansible_user }}"
 
     - name: Apply "Windows Security 2019" KB → Remove "Execute" ACL from Users
       when: stat_file.stat.exists == True
