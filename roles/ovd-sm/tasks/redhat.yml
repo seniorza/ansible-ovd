@@ -44,6 +44,7 @@
     password: "{{ ovd_mysql_password }}"
     priv: "{{ ovd_mysql_database }}.*:ALL"
     state: present
+  no_log: True
   notify:
     - Configure Session Manager Database
 
