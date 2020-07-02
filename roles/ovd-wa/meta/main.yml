@@ -22,7 +22,7 @@ galaxy_info:
   description: Inuvika OVD Web Access
   company: "Inuvika Inc."
   license: "license (Apache)"
-  min_ansible_version: 2.6
+  min_ansible_version: 2.8.5
   platforms:
     - name: Ubuntu
       versions:
