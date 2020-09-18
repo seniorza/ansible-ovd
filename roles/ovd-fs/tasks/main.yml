@@ -31,7 +31,7 @@
     dest: /etc/samba/smb.conf
     section: global
     option: acl allow execute always
-    value: True
+    value: "True"
   tags: [ovd, ovd-fs]
   when: ovd_allow_execute|bool
   notify:

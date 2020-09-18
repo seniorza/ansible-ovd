@@ -64,6 +64,7 @@
     priv: "{{ ovd_mysql_database }}.*:ALL"
     config_file: /etc/mysql/debian.cnf
     state: present
+  no_log: True
   notify:
     - Configure Session Manager Database
 
