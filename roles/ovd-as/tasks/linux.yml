@@ -235,6 +235,19 @@
         owner: root
         group: root
 
+- name: Fix "pulseaudio 8.0 compatibility with User Process Isolation"
+  when:
+    - ovd_version_detected is version('3.0', '>=')
+    - ansible_distribution_release == "xenial"
+    - ovd_best_practices is defined and ovd_best_practices|bool==true
+  block:
+    - name: Deactivate shm support on Pulseaudio 8.0
+      ini_file:
+        path: /etc/pulse/daemon.conf
+        section: null
+        option: enable-shm
+        value: "no"
+
 - name: Install NFS Client
   when: ovd_install_nfs is defined and ovd_install_nfs|bool==true
   package:
