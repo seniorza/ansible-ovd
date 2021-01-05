@@ -17,9 +17,7 @@
 - name: Check the OS version
   assert:
     that:
-      - ansible_distribution_release in ('trusty', 'xenial', 'bionic')
-      - ansible_distribution_release != 'bionic' or ovd_version_detected is version('2.7', '>=')
-      - ansible_distribution_release != 'trusty' or ovd_version_detected is version('2.7', '<=')
+      - ansible_distribution_release in ('xenial', 'bionic')
     msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is not supported by OVD {{ ovd_version_detected }}"
 
 - name: Update APT cache
