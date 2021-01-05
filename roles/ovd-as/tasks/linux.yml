@@ -21,11 +21,8 @@
    - ovd_as_verify_nls_utf8|bool
   include_tasks: linux_verify_nls_utf8.yml
 
-- when: ansible_os_family == 'Debian'
-  block:
-  - name: Install OVD Linux Application Server
-    apt:
-      name: 
+- set_fact:
+    ovd_as_packages:
       - inuvika-ovd-slaveserver-role-aps
       - inuvika-ovd-desktop
       - inuvika-ovd-desktop-gtk-theme
@@ -43,7 +40,15 @@
       - xrdp-scim
       - xrdp-seamrdp
       - xrdp-sound
-      - gtk3-engines-xfce
+
+- when: ansible_os_family == 'Debian'
+  set_fact: ovd_as_packages="{{ovd_as_packages}} + [ 'gtk3-engines-xfce' ]"
+
+- when: ansible_os_family == 'Debian'
+  block:
+  - name: Install OVD Linux Application Server
+    apt:
+      name: "{{ ovd_as_packages }}"
       state: latest
 
   - name: Uninstall xscreensaver
@@ -93,24 +98,7 @@
 
   - name: Install OVD Linux Application Server
     yum:
-      name:
-      - inuvika-ovd-slaveserver-role-aps
-      - inuvika-ovd-desktop
-      - inuvika-ovd-desktop-gtk-theme
-      - inuvika-ovd-externalapps-client
-      - inuvika-ovd-logout-dialog
-      - inuvika-ovd-regular-union-fs
-      - inuvika-ovd-shells
-      - inuvika-ovd-vnc-server
-      - xrdp
-      - xrdp-clipboard
-      - xrdp-ibus
-      - xrdp-printer
-      - xrdp-python
-      - xrdp-rdpdr
-      - xrdp-scim
-      - xrdp-seamrdp
-      - xrdp-sound
+      name: "{{ ovd_as_packages }}"
       state: latest
 
 - name: Update Slaveserver Roles
