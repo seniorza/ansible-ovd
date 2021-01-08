@@ -36,6 +36,7 @@
       - inuvika-ovd-vnc-server
       - xrdp
       - xrdp-clipboard
+      - xrdp-ibus
       - xrdp-printer
       - xrdp-python
       - xrdp-rdpdr
@@ -43,13 +44,6 @@
       - xrdp-seamrdp
       - xrdp-sound
       - gtk3-engines-xfce
-      state: latest
-
-  - name: Install OVD Linux Application Server
-    when: ovd_version_detected is version('2.6', '>=')
-    apt:
-      name:
-      - xrdp-ibus
       state: latest
 
   - name: Uninstall xscreensaver
@@ -87,46 +81,6 @@
     loop:
       - cups
       - smb
-  
-  - name: Workaround xrdp-ibus installation error in OVD 2.6
-    when:
-      - ovd_version_detected is version('2.6', '>=')
-      - ovd_version_detected is version('2.7', '<')
-    block:
-      - name: Workaround xrdp-ibus installation error in OVD 2.6 → Verify if package is installed
-        shell: rpm -qa xrdp-ibus | grep -q xrdp-ibus
-        args:
-          warn: false
-        register: xrdp_ibus_installed
-        failed_when: xrdp_ibus_installed.rc != 0 and xrdp_ibus_installed.rc != 1
-        changed_when: false
-
-      - when: xrdp_ibus_installed.rc == 1
-        block:
-          - name: Workaround xrdp-ibus installation error in OVD 2.6 → Install workaround dependencies
-            yum:
-              name: yum-utils
-
-          - name: Workaround xrdp-ibus installation error in OVD 2.6 → Detect package URL
-            shell: repoquery --location xrdp-ibus
-            register: res
-            changed_when: false
-
-          - name: Workaround xrdp-ibus installation error in OVD 2.6 → Download package
-            get_url:
-              url: "{{ res.stdout_lines[-1] }}"
-              dest: /opt
-
-          - name: Workaround xrdp-ibus installation error in OVD 2.6 → Install package dependencies
-            yum:
-              name:
-              - python36-gobject-base
-              - ibus
-
-          - name: Workaround xrdp-ibus installation error in OVD 2.6 → Install package
-            shell: "rpm -i --nodeps /opt/{{ res.stdout_lines[-1] | basename }}"
-            args:
-              warn: false
 
   - name: "Workaround for php-imagick installation error in OVD <2.8.1 after EL7.8 release"
     when:
@@ -150,19 +104,13 @@
       - inuvika-ovd-vnc-server
       - xrdp
       - xrdp-clipboard
+      - xrdp-ibus
       - xrdp-printer
       - xrdp-python
       - xrdp-rdpdr
       - xrdp-scim
       - xrdp-seamrdp
       - xrdp-sound
-      state: latest
-
-  - name: Install OVD Linux Application Server
-    when: ovd_version_detected is version('2.6', '>=')
-    yum:
-      name:
-      - xrdp-ibus
       state: latest
 
 - name: Update Slaveserver Roles

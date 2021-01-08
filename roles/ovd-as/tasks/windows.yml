@@ -59,7 +59,7 @@
       $wmi_rds.SetAllowTsConnections(1,1);
     }
 
-    $expected = {{ '1' if ovd_version_detected is version('2.6', '>=') else '0' }}
+    $expected = 1
 
     $wmi_rdp = (Get-WmiObject -Class "Win32_TSGeneralSetting" -Namespace root\cimv2\TerminalServices -Filter "TerminalName='RDP-tcp'")
 
@@ -74,21 +74,21 @@
   win_regedit:
     path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
     name: UserAuthentication
-    data: "{{ 1 if ovd_version_detected is version('2.6', '>=') else 0 }}"
+    data: "1"
     type: dword
 
 - name: Set RDP Minimum Encryption Level
   win_regedit:
     path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
     name: MinEncryptionLevel
-    data: "{{ 2 if ovd_version_detected is version('2.6', '>=') else 1 }}"
+    data: "2"
     type: dword
 
 - name: Set RDP Security Layer
   win_regedit:
     path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
     name: SecurityLayer
-    data: "{{ 1 if ovd_version_detected is version('2.6', '>=') else 0 }}"
+    data: "1"
     type: dword
 
 - set_fact:
@@ -139,15 +139,6 @@
   tags: [ovd, ovd-as]
   notify:
     - Restart OVD Windows Application Server
-
-- name: Configure the Windows VFS
-  win_lineinfile:
-    path: '%ProgramData%\OVD\slaveserver\default.conf'
-    regexp: '^union\s?='
-    line: union = configuration, volatile, extravolatile, data
-    insertafter: '^\[\s*main\s*\]'
-  tags: [ovd, ovd-as]
-  when: ovd_version_detected is version('2.6.1', '>=') and ovd_version_detected is version('2.6.2', '<=')
 
 - name: Ensure OVD service is started
   win_service:
