@@ -34,8 +34,8 @@ system requirements outlined in the [Installation and Configuration Guide](https
 
 * Windows Server 2008 R2
 
-   While Inuvika officially supports Windows 2008 R2 for OVD versions 2.7.3 and
-   earlier, it is not available via Ansible.
+   While Inuvika officially supports Windows 2008 R2 for OVD versions 2.7.3, it
+   is not available via Ansible.
 
    Ansible requires a minimum version of PowerShell that 2008 R2
    does not provide. Customers wishing to deploy 2008 R2 will have

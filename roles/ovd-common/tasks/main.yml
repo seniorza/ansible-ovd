@@ -35,7 +35,7 @@
 - name: Check OVD version
   assert:
     that:
-      - ovd_version_detected is version('2.6', '>=')
+      - ovd_version_detected is version('2.7', '>=')
       - ovd_version_detected is version('3.1', '<')
     msg: "{{ ovd_version_detected }} is not supported"
 
