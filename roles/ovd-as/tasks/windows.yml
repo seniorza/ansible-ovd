@@ -173,9 +173,21 @@
         state: present
         propagation: None
 
-    - name: 'Apply "User Isolation" KB : Prevent OVDUsers to list in C:\Users'
+    - name: 'Apply "User Isolation" KB : Detect ProfilesDirectory location'
+      win_reg_stat:
+        path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList
+        name: ProfilesDirectory
+      register: profile_directory
+
+    - name: 'Apply "User Isolation" KB : Ensure that the "ProfilesDirectory" registry key exists'
+      assert:
+        that:
+          - profile_directory.exists
+        msg: 'There is a problem with this Windows Server OS. The following registry key does not exist: "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\ProfilesDirectory".'
+
+    - name: 'Apply "User Isolation" KB : Prevent OVDUsers to list in {{ profile_directory.value }}'
       win_acl:
-        path: C:\Users
+        path: "{{ profile_directory.value }}"
         user: "OVDUsers"
         type: deny
         rights: ListDirectory
