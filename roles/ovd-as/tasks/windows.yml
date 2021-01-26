@@ -164,9 +164,9 @@
 - name: Apply "User Isolation" KB
   when: ovd_as_isolation is defined and ovd_as_isolation|bool==true
   block:
-    - name: 'Apply "User Isolation" KB : Prevent OVDUsers to write in C:\'
+    - name: 'Apply "User Isolation" KB : Prevent OVDUsers to write in SystemDrive'
       win_acl:
-        path: C:\
+        path: "{{ ansible_env.SystemDrive | default('C:') }}\\"
         user: "OVDUsers"
         type: deny
         rights: CreateDirectories, Write
@@ -196,7 +196,7 @@
 
 - name: Apply "Windows Security 2019" KB
   vars:
-    winpath: 'C:\Windows\SystemApps\Microsoft.Windows.SecHealthUI_cw5n1h2txyewy\SecHealthUI.exe'
+    winpath: '{{ ansible_env.SystemRoot | default("C:\\Windows") }}\SystemApps\Microsoft.Windows.SecHealthUI_cw5n1h2txyewy\SecHealthUI.exe'
   block:
     - name: 'Apply "Windows Security 2019" KB : Check that the Windows Security application exists'
       win_stat:
