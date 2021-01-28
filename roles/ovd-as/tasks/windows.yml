@@ -164,7 +164,7 @@
 - name: Apply "User Isolation" KB
   when: ovd_as_isolation is defined and ovd_as_isolation|bool==true
   block:
-    - name: 'Apply "User Isolation" KB : Prevent OVDUsers to write in SystemDrive'
+    - name: 'Apply "User Isolation" KB : Prevent OVDUsers from writing to SystemDrive'
       win_acl:
         path: "{{ ansible_env.SystemDrive | default('C:') }}\\"
         user: "OVDUsers"
