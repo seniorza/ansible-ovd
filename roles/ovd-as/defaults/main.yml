@@ -18,6 +18,7 @@ ovd_session_manager: 127.0.0.1
 ovd_disable_selinux: true
 # ovd_install_nfs: false
 # ovd_install_webdav: false
+ovd_install_msra: true
 # ovd_as_thread_count: 1
 # ovd_as_check_shell: false
 # ovd_as_linux_icon_theme: CrystalGnome
