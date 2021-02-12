@@ -177,18 +177,30 @@
 - name: Apply "User Isolation" KB
   when: ovd_as_isolation is defined and ovd_as_isolation|bool==true
   block:
-    - name: Apply "User Isolation" KB → Prevent OVDUsers to write in C:\
+    - name: 'Apply "User Isolation" KB : Prevent OVDUsers from writing to SystemDrive'
       win_acl:
-        path: C:\
+        path: "{{ ansible_env.SystemDrive | default('C:') }}\\"
         user: "OVDUsers"
         type: deny
         rights: CreateDirectories, Write
         state: present
         propagation: None
 
-    - name: Apply "User Isolation" KB → Prevent OVDUsers to list in C:\Users
+    - name: 'Apply "User Isolation" KB : Detect ProfilesDirectory location'
+      win_reg_stat:
+        path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList
+        name: ProfilesDirectory
+      register: profile_directory
+
+    - name: 'Apply "User Isolation" KB : Ensure that the "ProfilesDirectory" registry key exists'
+      assert:
+        that:
+          - profile_directory.exists
+        msg: 'There is a problem with this Windows Server OS. The following registry key does not exist: "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\ProfilesDirectory".'
+
+    - name: 'Apply "User Isolation" KB : Prevent OVDUsers to list in {{ profile_directory.value }}'
       win_acl:
-        path: C:\Users
+        path: "{{ profile_directory.value }}"
         user: "OVDUsers"
         type: deny
         rights: ListDirectory
@@ -197,20 +209,20 @@
 
 - name: Apply "Windows Security 2019" KB
   vars:
-    winpath: 'C:\Windows\SystemApps\Microsoft.Windows.SecHealthUI_cw5n1h2txyewy\SecHealthUI.exe'
+    winpath: '{{ ansible_env.SystemRoot | default("C:\\Windows") }}\SystemApps\Microsoft.Windows.SecHealthUI_cw5n1h2txyewy\SecHealthUI.exe'
   block:
-    - name: Apply "Windows Security 2019" KB → Check that the Windows Security application exists
+    - name: 'Apply "Windows Security 2019" KB : Check that the Windows Security application exists'
       win_stat:
         path: "{{ winpath }}"
       register: stat_file
 
-    - name: Apply "Windows Security 2019" KB → Takeown Windows Security application
+    - name: 'Apply "Windows Security 2019" KB : Takeown Windows Security application'
       when: stat_file.stat.exists == True
       win_owner:
         path: "{{ winpath }}"
         user: "{{ ansible_user }}"
 
-    - name: Apply "Windows Security 2019" KB → Remove "Execute" ACL from Users
+    - name: 'Apply "Windows Security 2019" KB : Remove "Execute" ACL from Users'
       when: stat_file.stat.exists == True
       win_acl:
         path: "{{ winpath }}"
@@ -232,24 +244,24 @@
       set_fact:
         ovd_webdav_setup_base: '{{ oas_setup_filename.result | replace("ApplicationServer", "webdavfs") | splitext | first }}'
 
-    - name: "Install Inuvika WebDAV driver: Download installer"
+    - name: "Install Inuvika WebDAV driver : Download installer"
       win_get_url:
         url: "{{ ovd_repo }}/{{ ovd_webdav_setup_base }}.exe"
         dest: '%TEMP%\{{ ovd_webdav_setup_base }}.exe'
         force: no
 
-    - name: "Install Inuvika WebDAV driver: Extract the certificate from the Inuvika setup"
+    - name: "Install Inuvika WebDAV driver : Extract the certificate from the Inuvika setup"
       win_shell: "[System.IO.File]::WriteAllBytes('{{ ovd_webdav_setup_base }}.cer', (Get-AuthenticodeSignature '{{ ovd_webdav_setup_base }}.exe').SignerCertificate.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert));"
       args:
         chdir: "{{ ansible_env.TEMP }}"
         creates: "{{ ansible_env.TEMP }}\\{{ ovd_webdav_setup_base }}.cer"
 
-    - name: "Install Inuvika WebDAV driver: Install the Inuvika code-sign certificate as a trusted publisher"
+    - name: "Install Inuvika WebDAV driver : Install the Inuvika code-sign certificate as a trusted publisher"
       win_certificate_store:
         path: "{{ ansible_env.TEMP }}\\{{ ovd_webdav_setup_base }}.cer"
         store_name: TrustedPublisher
 
-    - name: "Install Inuvika WebDAV driver: Install OVD WebDAV driver (exe)"
+    - name: "Install Inuvika WebDAV driver : Install OVD WebDAV driver (exe)"
       win_package:
         path: "{{ ansible_env.TEMP }}\\{{ ovd_webdav_setup_base }}.exe"
         arguments: "/S"
