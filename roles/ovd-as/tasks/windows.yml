@@ -91,6 +91,19 @@
     data: "1"
     type: dword
 
+- name: Install Microsoft Redistributable
+  when:
+    - ovd_as_setup_type == "msi"
+    - ovd_version_detected is version('3.0', '>=')
+  block:
+    - name: Install Microsoft Visual C++ 2008 SP1 Redistributable Package
+      win_chocolatey:
+        name: vcredist2008
+
+    - name: Install Microsoft Visual C++ Redistributable for Visual Studio 2017
+      win_chocolatey:
+        name: vcredist2017
+
 - set_fact:
     oas_setup_base: "{{ oas_setup_filename.result | splitext | first }}"
 
