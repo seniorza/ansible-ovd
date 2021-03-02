@@ -68,8 +68,19 @@
   notify:
     - Configure Session Manager Database
 
-- debconf: name=inuvika-ovd-session-manager question="inuvika-ovd-session-manager/admin_password" value="(password omitted)" vtype="password"
-- debconf: name=inuvika-ovd-session-manager question="inuvika-ovd-session-manager/admin_password_again" value="(password omitted)" vtype="password"
+- name: Register debconf values
+  block:
+    - debconf:
+        name: inuvika-ovd-session-manager
+        question: inuvika-ovd-session-manager/admin_password
+        value: "(password omitted)"
+        vtype: password
+
+    - debconf:
+        name: inuvika-ovd-session-manager
+        question: inuvika-ovd-session-manager/admin_password_again
+        value: "(password omitted)"
+        vtype: password
 
 - include_tasks: debian_install_cu.yml
   when: not ovd_sm_remove_can_update|bool
