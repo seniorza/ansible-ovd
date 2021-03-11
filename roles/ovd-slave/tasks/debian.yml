@@ -14,6 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+
+- name: Register debconf values
+  debconf:
+    name: inuvika-ovd-slaveserver
+    question: inuvika-ovd-slaveserver/session_manager
+    value: "{{ ovd_session_manager }}"
+    vtype: string
+
 - name: Install OVD Slaveserver
   apt:
     name: inuvika-ovd-slaveserver

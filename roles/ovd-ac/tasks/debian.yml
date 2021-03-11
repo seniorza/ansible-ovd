@@ -14,6 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+- name: Register debconf values
+  block:
+    - debconf:
+        name: inuvika-ovd-administration-console
+        question: inuvika-ovd-administration-console/session_manager_host
+        value: "{{ ovd_session_manager }}"
+        vtype: string
+
+    - debconf:
+        name: inuvika-ovd-administration-console
+        question: inuvika-ovd-administration-console/activate_ssl
+        value: true
+        vtype: boolean
+
 - name: Install Ovd Administration Console
   apt:
     name: "{{ ovd_ac_packages }}"
