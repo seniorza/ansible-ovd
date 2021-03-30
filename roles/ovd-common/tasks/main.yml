@@ -42,7 +42,7 @@
 - name: Check that the OS is x86_64
   assert:
     that:
-      - ansible_architecture in ('x86_64', '64-bit')
+      - ansible_architecture | regex_search('64')
     msg: "{{ ansible_architecture }} architecture is not supported"
 
 - name: Check the "ovd_www_config" setting value
