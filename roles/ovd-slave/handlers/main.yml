@@ -18,5 +18,4 @@
   service:
     name: ovd-slaveserver
     state: restarted
-    enabled: yes
   tags: [ovd, ovd-fs, ovd-as, ovd-esg]
