@@ -25,25 +25,21 @@ class AdminApi {
 		$this->login = $login_;
 		$this->password = $password_;
 
-		$this->stream_context = stream_context_create([
-			'ssl' => [
-				'verify_peer' => false,
-				'verify_peer_name' => false,
-				'allow_self_signed' => true
-			],
-		]);
-
-		$this->init();
-	}
-
-	public function init() {
-		$url = 'https://' . $this->host . '/ovd/service/admin/wsdl';
-		$this->service = new SoapClient($url, [
-			'login' => $this->login,
-			'password' => $this->password,
-			'location' => 'https://' . $this->host . '/ovd/service/admin',
-			'stream_context' => $this->stream_context,
-		]);
+		$this->service = new SoapClient(
+			'https://' . $this->host . '/ovd/service/admin/wsdl',
+			[
+				'login' => $this->login,
+				'password' => $this->password,
+				'location' => 'https://' . $this->host . '/ovd/service/admin',
+				'stream_context' => stream_context_create([
+					'ssl' => [
+						'verify_peer' => false,
+						'verify_peer_name' => false,
+						'allow_self_signed' => true,
+					],
+				]),
+			]
+		);
 	}
 
 	public function __call($func_, $args_) {
