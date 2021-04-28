@@ -25,13 +25,13 @@ class AdminApi {
 		$this->login = $login_;
 		$this->password = $password_;
 
-		$this->stream_context = stream_context_create(array(
-			'ssl' => array(
+		$this->stream_context = stream_context_create([
+			'ssl' => [
 				'verify_peer' => false,
 				'verify_peer_name' => false,
 				'allow_self_signed' => true
-			)
-		));
+			],
+		]);
 
 		$this->init();
 	}
@@ -39,12 +39,12 @@ class AdminApi {
 	public function init() {
 		$url = 'https://' . $this->host . '/ovd/service/admin/wsdl';
 		try {
-			$this->service = new SoapClient($url, array(
+			$this->service = new SoapClient($url, [
 				'login' => $this->login,
 				'password' => $this->password,
 				'location' => 'https://' . $this->host . '/ovd/service/admin',
 				'stream_context' => $this->stream_context,
-			));
+			]);
 		}
 		catch (Exception $e) {
 			die($e);
@@ -69,15 +69,14 @@ abstract class Ansible {
 	}
 
 	private function parse($args) {
+		$options = [];
 		if (count($args) > 1) {
 			$options = file_get_contents($args[1]);
 			preg_match_all('/([^=]+)=(?:\'((?:[^\']|\'"\'"\')+)\'|"((?:[^"]|"\'"\'")+)"|([^ ]+)) ?/', $options, $matches, PREG_SET_ORDER);
-			$options = array();
+
 			foreach ($matches as $item) {
 				$options[$item[1]] = $item[count($item) - 1];
 			}
-		} else {
-			$options = array();
 		}
 
 		return $options;
@@ -114,13 +113,20 @@ abstract class Ansible {
 		} catch (Exception $e) {
 			$output = ob_get_contents();
 			ob_end_clean();
-			echo json_encode(array("failed" => true, "msg" => (string)$e, "stdout" => $output), $json_opts) . "\n";
+			echo json_encode(
+				[
+					"failed" => true,
+					"msg" => (string)$e,
+					"stdout" => $output,
+				],
+				$json_opts
+			)."\n";
 			die();
 		}
 
 		$output = ob_get_contents();
 		ob_end_clean();
-		echo json_encode(array_merge($result, array("stdout" => $output)), $json_opts) . "\n";
+		echo json_encode(array_merge($result, ["stdout" => $output]), $json_opts) . "\n";
 	}
 
 	abstract protected function process();
@@ -129,7 +135,7 @@ abstract class Ansible {
 
 class AnsibleSm extends Ansible {
 	private $config = null;
-	private $config_modified = array();
+	private $config_modified = [];
 	private $service;
 
 	protected function getSetting($key) {
@@ -152,7 +158,7 @@ class AnsibleSm extends Ansible {
 		$final = array_pop($pkey);
 		while($item = array_shift($pkey)) {
 			if (!array_key_exists($item, $sconfig)) {
-				$sconfig[$item] = array();
+				$sconfig[$item] = [];
 			}
 
 			$sconfig =& $sconfig[$item];
@@ -165,7 +171,7 @@ class AnsibleSm extends Ansible {
 		if (count($this->config_modified)>0) {
 			print("New settings: " . json_encode($this->config_modified) . "\n");
 			$this->service->settings_set($this->config_modified);
-			$this->config_modified = array();
+			$this->config_modified = [];
 		}
 	}
 
@@ -238,12 +244,12 @@ class AnsibleSm extends Ansible {
 		}
 
 		$this->saveSettings();
-		return array("changed" => $changed);
+		return ["changed" => $changed];
 	}
 }
 
 $ansible = new AnsibleSm();
-$ansible->setDefaults(array(
+$ansible->setDefaults([
 	"maintenance" => null,
 	"killall" => false,
 	"autoregister" => null,
@@ -252,6 +258,6 @@ $ansible->setDefaults(array(
 	"host" => "127.0.0.1",
 	"user" => "admin",
 	"password" => "admin",
-));
+]);
 
 $ansible->run();
