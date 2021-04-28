@@ -37,11 +37,6 @@ class AdminApi {
 	}
 
 	public function init() {
-		$path  = dirname(__FILE__);
-		if (! is_dir($path)) {
-			$path = '.';
-		}
-
 		$url = 'https://' . $this->host . '/ovd/service/admin/wsdl';
 		try {
 			$this->service = new SoapClient($url, array(
