@@ -54,10 +54,6 @@ class AdminApi {
 	public function __call($func_, $args_) {
 		return $this->service->__call($func_, $args_);
 	}
-
-	public function __getFunctions() {
-		return $this->service->__getFunctions();
-	}
 }
 
 
