@@ -38,17 +38,12 @@ class AdminApi {
 
 	public function init() {
 		$url = 'https://' . $this->host . '/ovd/service/admin/wsdl';
-		try {
-			$this->service = new SoapClient($url, [
-				'login' => $this->login,
-				'password' => $this->password,
-				'location' => 'https://' . $this->host . '/ovd/service/admin',
-				'stream_context' => $this->stream_context,
-			]);
-		}
-		catch (Exception $e) {
-			die($e);
-		}
+		$this->service = new SoapClient($url, [
+			'login' => $this->login,
+			'password' => $this->password,
+			'location' => 'https://' . $this->host . '/ovd/service/admin',
+			'stream_context' => $this->stream_context,
+		]);
 	}
 
 	public function __call($func_, $args_) {
