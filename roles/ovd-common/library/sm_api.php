@@ -62,7 +62,6 @@ abstract class Ansible {
 
 	public function __construct() {
 		$this->options = $this->parse($_SERVER["argv"]);
-
 	}
 
 	public function setDefaults($options) {
@@ -80,6 +79,7 @@ abstract class Ansible {
 		} else {
 			$options = array();
 		}
+
 		return $options;
 	}
 
@@ -103,12 +103,12 @@ abstract class Ansible {
 
 	public function run() {
 		ob_start();
-		
+
 		$json_opts = 0;
 		if (defined ('JSON_PRETTY_PRINT')) {
 			$json_opts|= JSON_PRETTY_PRINT;
 		}
-		
+
 		try {
 			$result = $this->process();
 		} catch (Exception $e) {
@@ -117,6 +117,7 @@ abstract class Ansible {
 			echo json_encode(array("failed" => true, "msg" => (string)$e, "stdout" => $output), $json_opts) . "\n";
 			die();
 		}
+
 		$output = ob_get_contents();
 		ob_end_clean();
 		echo json_encode(array_merge($result, array("stdout" => $output)), $json_opts) . "\n";
@@ -135,11 +136,13 @@ class AnsibleSm extends Ansible {
 		if ($this->config === null) {
 			$this->config = $this->service->settings_get();
 		}
+
 		$sconfig = $this->config;
 		$pkey = explode(".", $key);
 		while($item = array_shift($pkey)) {
 			$sconfig = $sconfig[$item];
 		}
+
 		return $sconfig["value"];
 	}
 
@@ -151,11 +154,13 @@ class AnsibleSm extends Ansible {
 			if (!array_key_exists($item, $sconfig)) {
 				$sconfig[$item] = array();
 			}
+
 			$sconfig =& $sconfig[$item];
 		}
+
 		$sconfig[$final] = $value;
 	}
-	
+
 	protected function saveSettings() {
 		if (count($this->config_modified)>0) {
 			print("New settings: " . json_encode($this->config_modified) . "\n");
@@ -165,14 +170,22 @@ class AnsibleSm extends Ansible {
 	}
 
 	protected function process() {
-		$this->service = new AdminApi($this->getString("host"), $this->getString("user"), $this->getString("password"));
+		$this->service = new AdminApi(
+			$this->getString("host"),
+			$this->getString("user"),
+			$this->getString("password")
+		);
 
 		$changed = false;
 		$config = $this->service->getInitialConfiguration();
 
 		if ($this->isDefined("maintenance")) {
 			if ($config["system_in_maintenance"] != $this->getBoolean("maintenance")) {
-				$this->setSetting("general.system_in_maintenance", $this->getBoolean("maintenance"));
+				$this->setSetting(
+					"general.system_in_maintenance",
+					$this->getBoolean("maintenance")
+				);
+
 				echo "Set system_in_maintenance to " . (bool)$this->getBoolean("maintenance") . "\n";
 				$changed = true;
 			}
@@ -186,27 +199,36 @@ class AnsibleSm extends Ansible {
 					$this->service->session_kill($session["id"]);
 					$changed = true;
 				}
+
 				sleep(1);
 				$sessions = $this->service->sessions_list();
 			}
 		}
-		
+
 		if ($this->isDefined("autoregister")) {
 			if ($this->getSetting("general.slave_server_settings.auto_register_new_servers") != $this->getBoolean("autoregister")) {
-				$this->setSetting("general.slave_server_settings.auto_register_new_servers", $this->getBoolean("autoregister"));
+				$this->setSetting(
+					"general.slave_server_settings.auto_register_new_servers",
+					$this->getBoolean("autoregister")
+				);
+
 				echo "Set auto_register_new_servers to " . (bool)$this->getBoolean("autoregister") . "\n";
 				$changed = true;
 			}
 		}
-		
+
 		if ($this->isDefined("autoprod")) {
 			if ($this->getSetting("general.slave_server_settings.auto_switch_new_servers_to_production") != $this->getBoolean("autoprod")) {
-				$this->setSetting("general.slave_server_settings.auto_switch_new_servers_to_production", $this->getBoolean("autoprod"));
+				$this->setSetting(
+					"general.slave_server_settings.auto_switch_new_servers_to_production",
+					$this->getBoolean("autoprod")
+				);
+
 				echo "Set auto_switch_new_servers_to_production to " . (bool)$this->getBoolean("autoprod") . "\n";
 				$changed = true;
 			}
 		}
-		
+
 		if ($this->isDefined("subscription_key")) {
 			$data = @file_get_contents($this->getString("subscription_key"));
 			$b64 = base64_encode($data);
@@ -214,7 +236,7 @@ class AnsibleSm extends Ansible {
 			echo "Install subscription key\n";
 			$changed = true;
 		}
-		
+
 		$this->saveSettings();
 		return array("changed" => $changed);
 	}
@@ -231,4 +253,5 @@ $ansible->setDefaults(array(
 	"user" => "admin",
 	"password" => "admin",
 ));
+
 $ansible->run();
