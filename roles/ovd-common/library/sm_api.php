@@ -216,7 +216,6 @@ class AnsibleSm extends Ansible {
 	];
 
 	private $config = null;
-	private $config_modified = [];
 	private $service;
 
 	protected function getSetting($key) {
@@ -233,29 +232,6 @@ class AnsibleSm extends Ansible {
 		return $sconfig["value"];
 	}
 
-	protected function setSetting($key, $value) {
-		$sconfig =& $this->config_modified;
-		$pkey = explode(".", $key);
-		$final = array_pop($pkey);
-		while($item = array_shift($pkey)) {
-			if (!array_key_exists($item, $sconfig)) {
-				$sconfig[$item] = [];
-			}
-
-			$sconfig =& $sconfig[$item];
-		}
-
-		$sconfig[$final] = $value;
-	}
-
-	protected function saveSettings() {
-		if (count($this->config_modified)>0) {
-			print("New settings: " . json_encode($this->config_modified) . "\n");
-			$this->service->settings_set($this->config_modified);
-			$this->config_modified = [];
-		}
-	}
-
 	protected function process() {
 		$this->service = new AdminApi(
 			$this->options["host"],
@@ -264,45 +240,38 @@ class AnsibleSm extends Ansible {
 		);
 
 		$changed = false;
+
 		$config = $this->service->getInitialConfiguration();
+		$config_modified = [];
 
 		if (!is_null($this->options["maintenance"])) {
 			if ($config["system_in_maintenance"] != $this->options["maintenance"]) {
-				$this->setSetting(
-					"general.system_in_maintenance",
-					$this->getBoolean("maintenance")
-				);
-
 				echo "Set system_in_maintenance to " . (bool)$this->options["maintenance"] . "\n";
 				$changed = true;
+				$new_settings['general.system_in_maintenance'] = $this->options["maintenance"];
 			}
 		}
 
 		if (!is_null($this->options["autoregister"])) {
 			if ($this->getSetting("general.slave_server_settings.auto_register_new_servers") != $this->options["autoregister"]) {
-				$this->setSetting(
-					"general.slave_server_settings.auto_register_new_servers",
-					$this->options["autoregister"]
-				);
-
 				echo "Set auto_register_new_servers to " . (bool)$this->options["autoregister"] . "\n";
 				$changed = true;
+				$new_settings['general.slave_server_settings.auto_register_new_servers'] = $this->options["autoregister"];
 			}
 		}
 
 		if (!is_null($this->options["autoprod"])) {
 			if ($this->getSetting("general.slave_server_settings.auto_switch_new_servers_to_production") != $this->options["autoprod"]) {
-				$this->setSetting(
-					"general.slave_server_settings.auto_switch_new_servers_to_production",
-					$this->options["autoprod"]
-				);
-
 				echo "Set auto_switch_new_servers_to_production to " . (bool)$this->options["autoprod"] . "\n";
 				$changed = true;
+				$new_settings['general.slave_server_settings.auto_switch_new_servers_to_production'] = $this->options["autoregister"];
 			}
 		}
 
-		$this->saveSettings();
+		if ($config_modified) {
+			print("New settings: " . json_encode($config_modified) . "\n");
+			$this->service->settings_set($config_modified);
+		}
 
 		if ($this->options["purge_all_sessions"]) {
 			$sessions = $this->service->sessions_list();
