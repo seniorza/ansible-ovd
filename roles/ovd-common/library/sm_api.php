@@ -144,6 +144,34 @@ abstract class Ansible {
 					}
 
 					break;
+				case 'dict':
+					if (substr($value, 0, 1) != '{' || substr($value, -1) != '}') {
+						throw new Exception('Parameter "'.$key.'" expects type dict (1). Type provided: '.var_export($value, true));
+					}
+
+					if (strlen($value) > 2 && strpos($value, '\'"\'"\'') === false) {
+						throw new Exception('Parameter "'.$key.'" expects type dict (2). Type provided: '.var_export($value, true));
+					}
+
+					// Convert strange ansible data structure to JSON
+					$value = str_replace('\'"\'"\'', "'", $value);
+					$value = str_replace('"', '\"', $value);
+					$value = str_replace("'", '"', $value);
+					$value = preg_replace_callback(
+						'/": (True|False|Null)(, |})/',
+						function ($matches) {
+							return strtolower($matches[0]);
+						},
+						$value
+					);
+
+					$value = json_decode ($value, true);
+					if (!is_array($value)) {
+						throw new Exception('Parameter "'.$key.'" expects type dict (3). Type provided: '.var_export($value, true));
+					}
+
+					$this->options[$key] = $value;
+					break;
 				default:
 					throw new Exception('Internal error');
 			}
@@ -224,23 +252,12 @@ class AnsibleSm extends Ansible {
 			'type' => 'string',
 			'required' => true,
 		],
-
-		"autoprod" => [
-			'type' => 'boolean',
+		"settings" => [
+			'type' => 'dict',
 			'required' => false,
-			'default' => false,
-		],
-		"autoregister" => [
-			'type' => 'boolean',
-			'required' => false,
-			'default' => false,
+			'default' => [],
 		],
 		"purge_all_sessions" => [
-			'type' => 'boolean',
-			'required' => false,
-			'default' => false,
-		],
-		"maintenance" => [
 			'type' => 'boolean',
 			'required' => false,
 			'default' => false,
@@ -279,43 +296,25 @@ class AnsibleSm extends Ansible {
 		$changed = false;
 		$diff = [];
 
-		$config = $this->service->getInitialConfiguration();
-		$config_modified = [];
+		if ($this->options["settings"]) {
+			$config_modified = [];
+			foreach($this->options["settings"] as $key => $value) {
+				$value_saved = $this->getSetting($key);
+				$diff['before'][$key] = $value_saved;
+				$diff['after'][$key] = $value;
+				if ($value == $value_saved) {
+					continue;
+				}
 
-		if (!is_null($this->options["maintenance"])) {
-			if ($config["system_in_maintenance"] != $this->options["maintenance"]) {
+				$config_modified[$key] = $value;
 				$changed = true;
-				$diff['before']['maintenance'] = $config["system_in_maintenance"];
-				$diff['after']['maintenance']  = $this->options["maintenance"];
-
-				$new_settings['general.system_in_maintenance'] = $this->options["maintenance"];
 			}
-		}
 
-		if (!is_null($this->options["autoregister"])) {
-			if ($this->getSetting("general.slave_server_settings.auto_register_new_servers") != $this->options["autoregister"]) {
-				$changed = true;
-				$diff['before']['autoregister'] = $config["general.slave_server_settings.auto_register_new_servers"];
-				$diff['after']['autoregister'] = $this->options["autoregister"];
-
-				$new_settings['general.slave_server_settings.auto_register_new_servers'] = $this->options["autoregister"];
-			}
-		}
-
-		if (!is_null($this->options["autoprod"])) {
-			if ($this->getSetting("general.slave_server_settings.auto_switch_new_servers_to_production") != $this->options["autoprod"]) {
-				$changed = true;
-				$diff['before']['autoprod'] = $config["general.slave_server_settings.auto_switch_new_servers_to_production"];
-				$diff['after']['autoprod'] = $this->options["autoprod"];
-
-				$new_settings['general.slave_server_settings.auto_switch_new_servers_to_production'] = $this->options["autoregister"];
-			}
-		}
-
-		if ($config_modified && !$this->options['_ansible_check_mode']) {
-			$ret = $this->service->settings_set($new_settings);
-			if (!$ret) {
-				throw new Exception('settings_set returned unexpected value '.var_export($ret, false));
+			if ($config_modified && !$this->options['_ansible_check_mode']) {
+				$ret = $this->service->settings_set($new_settings);
+				if (!$ret) {
+					throw new Exception('settings_set returned unexpected value '.var_export($ret, false));
+				}
 			}
 		}
 
