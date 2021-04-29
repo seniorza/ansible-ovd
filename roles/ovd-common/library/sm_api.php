@@ -54,10 +54,32 @@ abstract class Ansible {
 
 	protected $options;
 
+	protected static $base_parameters = [
+		"_ansible_check_mode" => [
+			'type' => 'boolean',
+			'required' => false,
+			'default' => false,
+		],
+		'_ansible_diff' => [
+			'type' => 'boolean',
+			'required' => false,
+			'default' => false,
+		],
+		'_ansible_no_log' => [
+			'type' => 'boolean',
+			'required' => false,
+			'default' => false,
+		],
+		'_ansible_verbosity' => [
+			'type' => 'int',
+			'required' => false,
+			'default' => 0,
+		],
+	];
 	protected $parameters = [];
 
 	public function __construct() {
-		$this->parameters = array_merge($this->parameters);
+		$this->parameters = array_merge($this->parameters, self::$base_parameters);
 	}
 
 	private function init_parameters() {
@@ -90,6 +112,13 @@ abstract class Ansible {
 			}
 
 			switch($this->parameters[$key]['type']) {
+				case 'int':
+					if (!is_numeric($value)) {
+						throw new Exception('Parameter "'.$key.'" expects type int. Type provided: '.var_export($value, true));
+					}
+
+					$this->options[$key] = intval($value);
+					break;
 				case 'string':
 					if (
 						isset($this->parameters[$key]['choices'])
@@ -142,19 +171,27 @@ abstract class Ansible {
 		catch (Exception $e) {
 			$output = ob_get_contents();
 			ob_end_clean();
-			$this->json_exit([
+
+			$result = [
 				"failed" => true,
 				"msg" => (string)$e,
-				"stdout" => $output,
-			], 2);
+			];
+
+			if (@$this->options['_ansible_verbosity']) {
+				$result["stdout"] = $output;
+			}
+
+			$this->json_exit($result, 2);
 		}
 
 		$output = ob_get_contents();
 		ob_end_clean();
-		$this->json_exit(array_merge(
-			$result,
-			["stdout" => $output]
-		));
+
+		if (@$this->options['_ansible_verbosity'] > 1) {
+			$result["stdout"] = $output;
+		}
+
+		$this->json_exit($result);
 	}
 
 	abstract protected function process();
@@ -240,36 +277,42 @@ class AnsibleSm extends Ansible {
 		);
 
 		$changed = false;
+		$diff = [];
 
 		$config = $this->service->getInitialConfiguration();
 		$config_modified = [];
 
 		if (!is_null($this->options["maintenance"])) {
 			if ($config["system_in_maintenance"] != $this->options["maintenance"]) {
-				echo "Set system_in_maintenance to " . (bool)$this->options["maintenance"] . "\n";
 				$changed = true;
+				$diff['before']['maintenance'] = $config["system_in_maintenance"];
+				$diff['after']['maintenance']  = $this->options["maintenance"];
+
 				$new_settings['general.system_in_maintenance'] = $this->options["maintenance"];
 			}
 		}
 
 		if (!is_null($this->options["autoregister"])) {
 			if ($this->getSetting("general.slave_server_settings.auto_register_new_servers") != $this->options["autoregister"]) {
-				echo "Set auto_register_new_servers to " . (bool)$this->options["autoregister"] . "\n";
 				$changed = true;
+				$diff['before']['autoregister'] = $config["general.slave_server_settings.auto_register_new_servers"];
+				$diff['after']['autoregister'] = $this->options["autoregister"];
+
 				$new_settings['general.slave_server_settings.auto_register_new_servers'] = $this->options["autoregister"];
 			}
 		}
 
 		if (!is_null($this->options["autoprod"])) {
 			if ($this->getSetting("general.slave_server_settings.auto_switch_new_servers_to_production") != $this->options["autoprod"]) {
-				echo "Set auto_switch_new_servers_to_production to " . (bool)$this->options["autoprod"] . "\n";
 				$changed = true;
+				$diff['before']['autoprod'] = $config["general.slave_server_settings.auto_switch_new_servers_to_production"];
+				$diff['after']['autoprod'] = $this->options["autoprod"];
+
 				$new_settings['general.slave_server_settings.auto_switch_new_servers_to_production'] = $this->options["autoregister"];
 			}
 		}
 
-		if ($config_modified) {
-			print("New settings: " . json_encode($config_modified) . "\n");
+		if ($config_modified && !$this->options['_ansible_check_mode']) {
 			$ret = $this->service->settings_set($new_settings);
 			if (!$ret) {
 				throw new Exception('settings_set returned unexpected value '.var_export($ret, false));
@@ -280,14 +323,18 @@ class AnsibleSm extends Ansible {
 			$sessions = $this->service->sessions_list();
 			if ($sessions) {
 				$changed = true;
-				while (is_array($sessions) && count($sessions) > 0) {
-					echo count($sessions) . " sessions left\n";
-					foreach ($sessions as $session) {
-						$this->service->session_kill($session["id"]);
-					}
+				$diff['before']['purge_all_sessions'] = array_keys($sessions);
+				$diff['after']['purge_all_sessions'] = [];
+				if (!$this->options['_ansible_check_mode']) {
+					while (is_array($sessions) && count($sessions) > 0) {
+						echo count($sessions) . " sessions left\n";
+						foreach ($sessions as $session) {
+							$this->service->session_kill($session["id"]);
+						}
 
-					sleep(1);
-					$sessions = $this->service->sessions_list();
+						sleep(1);
+						$sessions = $this->service->sessions_list();
+					}
 				}
 			}
 		}
@@ -295,16 +342,22 @@ class AnsibleSm extends Ansible {
 		if ($this->options["subscription_key"]) {
 			$changed = true;
 
-			echo "Install subscription key\n";
-			$data = @file_get_contents($this->options["subscription_key"]);
-			$b64 = base64_encode($data);
-			$ret = $this->service->certificate_add($b64);
-			if (!$ret) {
-				throw new Exception('certificate_add returned unexpected value '.var_export($ret, false));
+			if (!$this->options['_ansible_check_mode']) {
+				$data = @file_get_contents($this->options["subscription_key"]);
+				$b64 = base64_encode($data);
+				$ret = $this->service->certificate_add($b64);
+				if (!$ret) {
+					throw new Exception('certificate_add returned unexpected value '.var_export($ret, false));
+				}
 			}
 		}
 
-		return ["changed" => $changed];
+		$ret = ["changed" => $changed];
+		if ($this->options['_ansible_diff'] && !$this->options['_ansible_no_log']) {
+			$ret['diff'] = $diff;
+		}
+
+		return $ret;
 	}
 }
 
