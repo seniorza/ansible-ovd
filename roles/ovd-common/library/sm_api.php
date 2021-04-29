@@ -270,29 +270,38 @@ class AnsibleSm extends Ansible {
 
 		if ($config_modified) {
 			print("New settings: " . json_encode($config_modified) . "\n");
-			$this->service->settings_set($config_modified);
+			$ret = $this->service->settings_set($new_settings);
+			if (!$ret) {
+				throw new Exception('settings_set returned unexpected value '.var_export($ret, false));
+			}
 		}
 
 		if ($this->options["purge_all_sessions"]) {
 			$sessions = $this->service->sessions_list();
-			while (is_array($sessions) && count($sessions) > 0) {
-				echo count($sessions) . " sessions left\n";
-				foreach ($sessions as $session) {
-					$this->service->session_kill($session["id"]);
-					$changed = true;
-				}
+			if ($sessions) {
+				$changed = true;
+				while (is_array($sessions) && count($sessions) > 0) {
+					echo count($sessions) . " sessions left\n";
+					foreach ($sessions as $session) {
+						$this->service->session_kill($session["id"]);
+					}
 
-				sleep(1);
-				$sessions = $this->service->sessions_list();
+					sleep(1);
+					$sessions = $this->service->sessions_list();
+				}
 			}
 		}
 
 		if ($this->options["subscription_key"]) {
+			$changed = true;
+
+			echo "Install subscription key\n";
 			$data = @file_get_contents($this->options["subscription_key"]);
 			$b64 = base64_encode($data);
-			$this->service->certificate_add($b64);
-			echo "Install subscription key\n";
-			$changed = true;
+			$ret = $this->service->certificate_add($b64);
+			if (!$ret) {
+				throw new Exception('certificate_add returned unexpected value '.var_export($ret, false));
+			}
 		}
 
 		return ["changed" => $changed];
