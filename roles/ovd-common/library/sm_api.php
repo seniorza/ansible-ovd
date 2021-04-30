@@ -188,7 +188,7 @@ class AnsibleSm extends Ansible {
 			}
 		}
 
-		if ($this->getBoolean("killall")) {
+		if ($this->getBoolean("purge_all_sessions")) {
 			$sessions = $this->service->sessions_list();
 			while (is_array($sessions) && count($sessions) > 0) {
 				echo count($sessions) . " sessions left\n";
@@ -242,7 +242,7 @@ class AnsibleSm extends Ansible {
 $ansible = new AnsibleSm();
 $ansible->setDefaults([
 	"maintenance" => null,
-	"killall" => false,
+	"purge_all_sessions" => false,
 	"autoregister" => null,
 	"autoprod" => null,
 	"subscription_key" => null,
