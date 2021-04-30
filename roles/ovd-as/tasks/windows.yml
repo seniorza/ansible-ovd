@@ -267,3 +267,9 @@
         arguments: "/S"
         product_id: "Inuvika OVD WebDAV driver"
         state: present
+
+- name: Install Remote-Assistance
+  when: ovd_install_msra is defined and ovd_install_msra|bool==true
+  win_feature:
+    name: Remote-Assistance
+    state: present
