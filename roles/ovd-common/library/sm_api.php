@@ -49,53 +49,97 @@ class AdminApi {
 
 
 abstract class Ansible {
-	private $options;
+	private static $string_boolean_false = ["no",  "false", "0"];
+	private static $string_boolean_true  = ["yes", "true",  "1"];
+
+	protected $options;
+
+	protected $parameters = [];
 
 	public function __construct() {
-		$this->options = $this->parse($_SERVER["argv"]);
+		$this->parameters = array_merge($this->parameters);
 	}
 
-	public function setDefaults($options) {
-		$this->options = array_merge($options, $this->options);
-	}
+	private function init_parameters() {
+		$this->options = [];
 
-	private function parse($args) {
-		$options = [];
-		if (count($args) > 1) {
-			$options = file_get_contents($args[1]);
-			preg_match_all('/([^=]+)=(?:\'((?:[^\']|\'"\'"\')+)\'|"((?:[^"]|"\'"\'")+)"|([^ ]+)) ?/', $options, $matches, PREG_SET_ORDER);
+		if (count($_SERVER["argv"]) < 2) {
+			throw new Exception('Parameter file is missing');
+		}
 
-			foreach ($matches as $item) {
-				$options[$item[1]] = $item[count($item) - 1];
+		$data = file_get_contents($_SERVER["argv"][1]);
+		if (!$data) {
+			throw new Exception('Parameter file is empty');
+		}
+
+		preg_match_all('/([^=]+)=(?:\'((?:[^\']|\'"\'"\')+)\'|"((?:[^"]|"\'"\'")+)"|([^ ]+)) ?/', $data, $matches, PREG_SET_ORDER);
+		if (!$matches) {
+			throw new Exception('Parameter file is empty');
+		}
+
+		foreach ($matches as $item) {
+			$key = $item[1];
+			$value = $item[count($item) - 1];
+			if (!isset($this->parameters[$key])) {
+				if (strpos($key, '_ansible_') === 0) {
+					continue;
+				}
+				else {
+					throw new Exception('Unknown parameter "'.$key.'"');
+				}
+			}
+
+			switch($this->parameters[$key]['type']) {
+				case 'string':
+					if (
+						isset($this->parameters[$key]['choices'])
+							&&
+						is_array($this->parameters[$key]['choices'])
+							&&
+						!in_array($value, $this->parameters[$key]['choices'])
+					) {
+						throw new Exception('Parameter "'.$key.'", value '.var_export($value, true).' not in: '.implode(', ', $this->parameters[$key]['choices']));
+					}
+
+					$this->options[$key] = $value;
+					break;
+				case 'boolean':
+					if (in_array(strtolower($value), self::$string_boolean_false)) {
+						$this->options[$key] = false;
+					}
+					else if (in_array(strtolower($value), self::$string_boolean_true)) {
+						$this->options[$key] = true;
+					}
+					else {
+						throw new Exception('Parameter "'.$key.'" expects type boolean. Type provided: '.var_export($value, true));
+					}
+
+					break;
+				default:
+					throw new Exception('Internal error');
 			}
 		}
 
-		return $options;
+		foreach($this->parameters as $key => $parameter) {
+			if (!array_key_exists($key, $this->options)) {
+				if (array_key_exists('default', $parameter)) {
+					$this->options[$key] = $parameter['default'];
+				}
+				else if ($parameter['required']) {
+					throw new Exception('Parameter "'.$key.'" is required');
+				}
+			}
+		}
 	}
 
-	protected function getBoolean($key) {
-		if (array_key_exists($key, $this->options))
-			return strtolower($this->options[$key]) == "yes"
-				|| strtolower($this->options[$key]) == "true"
-				|| strtolower($this->options[$key]) == "1";
-		return false;
-	}
-
-	protected function getString($key) {
-		if (array_key_exists($key, $this->options))
-			return (string)$this->options[$key];
-		return;
-	}
-
-	protected function isDefined($key) {
-		return array_key_exists($key, $this->options) && $this->options[$key] !== null;
-	}
 
 	public function run() {
 		ob_start();
 		try {
+			$this->init_parameters();
 			$result = $this->process();
-		} catch (Exception $e) {
+		}
+		catch (Exception $e) {
 			$output = ob_get_contents();
 			ob_end_clean();
 			$this->json_exit([
@@ -129,6 +173,48 @@ abstract class Ansible {
 
 
 class AnsibleSm extends Ansible {
+	protected $parameters = [
+		"host" => [
+			'type' => 'string',
+			'required' => false,
+			'default' => "127.0.0.1",
+		],
+		"user" =>  [
+			'type' => 'string',
+			'required' => true,
+		],
+		"password" =>  [
+			'type' => 'string',
+			'required' => true,
+		],
+
+		"autoprod" => [
+			'type' => 'boolean',
+			'required' => false,
+			'default' => false,
+		],
+		"autoregister" => [
+			'type' => 'boolean',
+			'required' => false,
+			'default' => false,
+		],
+		"purge_all_sessions" => [
+			'type' => 'boolean',
+			'required' => false,
+			'default' => false,
+		],
+		"maintenance" => [
+			'type' => 'boolean',
+			'required' => false,
+			'default' => false,
+		],
+		"subscription_key" => [
+			'type' => 'string',
+			'required' => false,
+			'default' => null,
+		],
+	];
+
 	private $config = null;
 	private $config_modified = [];
 	private $service;
@@ -172,27 +258,27 @@ class AnsibleSm extends Ansible {
 
 	protected function process() {
 		$this->service = new AdminApi(
-			$this->getString("host"),
-			$this->getString("user"),
-			$this->getString("password")
+			$this->options["host"],
+			$this->options["user"],
+			$this->options["password"]
 		);
 
 		$changed = false;
 		$config = $this->service->getInitialConfiguration();
 
-		if ($this->isDefined("maintenance")) {
-			if ($config["system_in_maintenance"] != $this->getBoolean("maintenance")) {
+		if (!is_null($this->options["maintenance"])) {
+			if ($config["system_in_maintenance"] != $this->options["maintenance"]) {
 				$this->setSetting(
 					"general.system_in_maintenance",
 					$this->getBoolean("maintenance")
 				);
 
-				echo "Set system_in_maintenance to " . (bool)$this->getBoolean("maintenance") . "\n";
+				echo "Set system_in_maintenance to " . (bool)$this->options["maintenance"] . "\n";
 				$changed = true;
 			}
 		}
 
-		if ($this->getBoolean("purge_all_sessions")) {
+		if ($this->options["purge_all_sessions"]) {
 			$sessions = $this->service->sessions_list();
 			while (is_array($sessions) && count($sessions) > 0) {
 				echo count($sessions) . " sessions left\n";
@@ -206,32 +292,32 @@ class AnsibleSm extends Ansible {
 			}
 		}
 
-		if ($this->isDefined("autoregister")) {
-			if ($this->getSetting("general.slave_server_settings.auto_register_new_servers") != $this->getBoolean("autoregister")) {
+		if (!is_null($this->options["autoregister"])) {
+			if ($this->getSetting("general.slave_server_settings.auto_register_new_servers") != $this->options["autoregister"]) {
 				$this->setSetting(
 					"general.slave_server_settings.auto_register_new_servers",
-					$this->getBoolean("autoregister")
+					$this->options["autoregister"]
 				);
 
-				echo "Set auto_register_new_servers to " . (bool)$this->getBoolean("autoregister") . "\n";
+				echo "Set auto_register_new_servers to " . (bool)$this->options["autoregister"] . "\n";
 				$changed = true;
 			}
 		}
 
-		if ($this->isDefined("autoprod")) {
-			if ($this->getSetting("general.slave_server_settings.auto_switch_new_servers_to_production") != $this->getBoolean("autoprod")) {
+		if (!is_null($this->options["autoprod"])) {
+			if ($this->getSetting("general.slave_server_settings.auto_switch_new_servers_to_production") != $this->options["autoprod"]) {
 				$this->setSetting(
 					"general.slave_server_settings.auto_switch_new_servers_to_production",
-					$this->getBoolean("autoprod")
+					$this->options["autoprod"]
 				);
 
-				echo "Set auto_switch_new_servers_to_production to " . (bool)$this->getBoolean("autoprod") . "\n";
+				echo "Set auto_switch_new_servers_to_production to " . (bool)$this->options["autoprod"] . "\n";
 				$changed = true;
 			}
 		}
 
-		if ($this->isDefined("subscription_key")) {
-			$data = @file_get_contents($this->getString("subscription_key"));
+		if ($this->options["subscription_key"]) {
+			$data = @file_get_contents($this->options["subscription_key"]);
 			$b64 = base64_encode($data);
 			$this->service->certificate_add($b64);
 			echo "Install subscription key\n";
@@ -244,15 +330,4 @@ class AnsibleSm extends Ansible {
 }
 
 $ansible = new AnsibleSm();
-$ansible->setDefaults([
-	"maintenance" => null,
-	"purge_all_sessions" => false,
-	"autoregister" => null,
-	"autoprod" => null,
-	"subscription_key" => null,
-	"host" => "127.0.0.1",
-	"user" => "admin",
-	"password" => "admin",
-]);
-
 $ansible->run();
