@@ -93,34 +93,38 @@ abstract class Ansible {
 
 	public function run() {
 		ob_start();
-
-		$json_opts = 0;
-		if (defined ('JSON_PRETTY_PRINT')) {
-			$json_opts|= JSON_PRETTY_PRINT;
-		}
-
 		try {
 			$result = $this->process();
 		} catch (Exception $e) {
 			$output = ob_get_contents();
 			ob_end_clean();
-			echo json_encode(
-				[
-					"failed" => true,
-					"msg" => (string)$e,
-					"stdout" => $output,
-				],
-				$json_opts
-			)."\n";
-			die();
+			$this->json_exit([
+				"failed" => true,
+				"msg" => (string)$e,
+				"stdout" => $output,
+			], 2);
 		}
 
 		$output = ob_get_contents();
 		ob_end_clean();
-		echo json_encode(array_merge($result, ["stdout" => $output]), $json_opts) . "\n";
+		$this->json_exit(array_merge(
+			$result,
+			["stdout" => $output]
+		));
 	}
 
 	abstract protected function process();
+
+
+	protected function json_exit($data, $exit_code=0) {
+		$json_opts = 0;
+		if (defined ('JSON_PRETTY_PRINT')) {
+			$json_opts|= JSON_PRETTY_PRINT;
+		}
+
+		echo json_encode($data)."\n";
+		exit($exit_code);
+	}
 }
 
 
