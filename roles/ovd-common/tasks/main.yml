@@ -37,7 +37,7 @@
   when: check_ovd_version | default('true') | bool
   assert:
     that:
-      - ovd_version_detected is version('2.7', '>=')
+      - ovd_version_detected is version('2.8', '>=')
       - ovd_version_detected is version('3.2', '<')
     msg: "{{ ovd_version_detected }} is not supported"
 
@@ -48,7 +48,6 @@
     msg: "{{ ansible_architecture }} architecture is not supported"
 
 - name: Check the "ovd_www_config" setting value
-  when: ovd_version_detected is version('2.8', '>=')
   assert:
     that:
       - ovd_www_config in ('apache-mod', 'apache-fpm')
