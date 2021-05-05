@@ -278,20 +278,6 @@ class AnsibleSm extends Ansible {
 			}
 		}
 
-		if ($this->options["purge_all_sessions"]) {
-			$sessions = $this->service->sessions_list();
-			while (is_array($sessions) && count($sessions) > 0) {
-				echo count($sessions) . " sessions left\n";
-				foreach ($sessions as $session) {
-					$this->service->session_kill($session["id"]);
-					$changed = true;
-				}
-
-				sleep(1);
-				$sessions = $this->service->sessions_list();
-			}
-		}
-
 		if (!is_null($this->options["autoregister"])) {
 			if ($this->getSetting("general.slave_server_settings.auto_register_new_servers") != $this->options["autoregister"]) {
 				$this->setSetting(
@@ -316,6 +302,22 @@ class AnsibleSm extends Ansible {
 			}
 		}
 
+		$this->saveSettings();
+
+		if ($this->options["purge_all_sessions"]) {
+			$sessions = $this->service->sessions_list();
+			while (is_array($sessions) && count($sessions) > 0) {
+				echo count($sessions) . " sessions left\n";
+				foreach ($sessions as $session) {
+					$this->service->session_kill($session["id"]);
+					$changed = true;
+				}
+
+				sleep(1);
+				$sessions = $this->service->sessions_list();
+			}
+		}
+
 		if ($this->options["subscription_key"]) {
 			$data = @file_get_contents($this->options["subscription_key"]);
 			$b64 = base64_encode($data);
@@ -324,7 +326,6 @@ class AnsibleSm extends Ansible {
 			$changed = true;
 		}
 
-		$this->saveSettings();
 		return ["changed" => $changed];
 	}
 }
