@@ -17,19 +17,22 @@
 
 - name: Register debconf values
   block:
-    - debconf:
+    - name: "Register debconf values : link_session_manager"
+      debconf:
         name: inuvika-ovd-web-access
         question: inuvika-ovd-web-access/link_session_manager
         value: "true"
         vtype: boolean
 
-    - debconf:
+    - name: "Register debconf values : session_manager_ip"
+      debconf:
         name: inuvika-ovd-web-access
         question: inuvika-ovd-web-access/session_manager_ip
         value: "{{ ovd_session_manager }}"
         vtype: string
 
-    - debconf:
+    - name: "Register debconf values : activate_ssl"
+      debconf:
         name: inuvika-ovd-web-access
         question: inuvika-ovd-web-access/activate_ssl
         value: "true"
