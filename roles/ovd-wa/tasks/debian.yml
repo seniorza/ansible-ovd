@@ -20,7 +20,7 @@
     - debconf:
         name: inuvika-ovd-web-access
         question: inuvika-ovd-web-access/link_session_manager
-        value: true
+        value: "true"
         vtype: boolean
 
     - debconf:
@@ -32,7 +32,7 @@
     - debconf:
         name: inuvika-ovd-web-access
         question: inuvika-ovd-web-access/activate_ssl
-        value: true
+        value: "true"
         vtype: boolean
 
 - name: Install OVD Web Access
