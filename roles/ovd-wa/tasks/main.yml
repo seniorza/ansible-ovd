@@ -60,7 +60,7 @@
 
 - name: Ensure Guacamole is started
   service:
-    name: guacd
+    name: "{{ 'guacd' if ovd_version_detected is version('3.0.99', '<') else 'guacamole' }}"
     state: started
     enabled: yes
   tags: [ovd, ovd-wa]
