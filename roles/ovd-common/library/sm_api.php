@@ -429,7 +429,7 @@ class AnsibleSm extends Ansible {
 		}
 
 		if ($this->options["purge_all_sessions"]) {
-			$sessions = $this->service->sessions_list();
+			$sessions = $this->service->sessions_list(null);
 			if ($sessions) {
 				$changed = true;
 				$diff['before']['purge_all_sessions'] = array_keys($sessions);
@@ -442,7 +442,7 @@ class AnsibleSm extends Ansible {
 						}
 
 						sleep(1);
-						$sessions = $this->service->sessions_list();
+						$sessions = $this->service->sessions_list(null);
 					}
 				}
 			}
