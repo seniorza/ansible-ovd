@@ -26,8 +26,9 @@
 
 - name: Switch Session Manager to maintenance and kill all sessions
   sm_api:
-    maintenance: true
-    killall: true
+    settings:
+      general.system_in_maintenance: yes
+    purge_all_sessions: true
     user: "{{ ovd_sm_admin_login }}"
     password: "{{ ovd_sm_admin_password }}"
   when: sm_install_result is failed and ovd_sm_force_update|bool

@@ -84,7 +84,8 @@
   sm_api:
     user: "{{ ovd_sm_admin_login }}"
     password: "{{ ovd_sm_admin_password }}"
-    autoprod: "{{ ovd_sm_register_in_production }}"
+    settings:
+      general.slave_server_settings.auto_switch_new_servers_to_production: "{{ ovd_sm_register_in_production }}"
   tags: [ovd, ovd-sm]
   when: ovd_sm_register_in_production is defined
 
@@ -92,13 +93,15 @@
   sm_api:
     user: "{{ ovd_sm_admin_login }}"
     password: "{{ ovd_sm_admin_password }}"
-    autoregister: "{{ ovd_sm_register_new_servers }}"
+    settings:
+      general.slave_server_settings.auto_register_new_servers: "{{ ovd_sm_register_new_servers }}"
   tags: [ovd, ovd-sm]
   when: ovd_sm_register_new_servers is defined
 
 - name: Switch Session Manager to production
   sm_api:
-    maintenance: false
     user: "{{ ovd_sm_admin_login }}"
     password: "{{ ovd_sm_admin_password }}"
+    settings:
+      general.system_in_maintenance: false
   tags: [ovd, ovd-sm]
