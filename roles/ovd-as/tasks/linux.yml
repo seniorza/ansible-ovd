@@ -138,7 +138,6 @@
     name: ovd-slaveserver
     state: started
     enabled: yes
-    pattern: "ovd-slaveserver --daemonize"
 
 - name: Apply "Linux Terminal preferences" KB
   when:
