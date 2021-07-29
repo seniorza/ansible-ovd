@@ -104,6 +104,18 @@
       name: "{{ ovd_as_packages }}"
       state: latest
 
+  - name: Enable and start the XRDP services
+    when: ovd_version_detected is version('3.0.99', '>=')
+    service:
+      name: "{{ item }}"
+      state: started
+      enabled: yes
+    loop:
+      - xrdp-log.service
+      - xrdp-printer.service
+      - xrdp-sesman.service
+      - xrdp.service
+
 - name: Update Slaveserver Roles
   ovd_slaveserver_role:
     dest: /etc/ovd/slaveserver/slaveserver.conf
