@@ -31,7 +31,6 @@
     name: ovd-slaveserver
     state: started
     enabled: yes
-    pattern: "ovd-slaveserver --daemonize"
   tags: [ovd, ovd-esg]
 
 - name: Update Slaveserver Roles
