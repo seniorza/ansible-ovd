@@ -54,7 +54,6 @@
     - Restart OVD Slaveserver
   loop:
     - { option: web_client, value: ovd_webaccess_url }
-    - { option: admin_redirection, value: ovd_esg_admin_redirection }
     - { option: ovd_esg_address, value: ovd_esg_address }
     - { option: port, value: ovd_esg_port }
     - { option: max_process, value: ovd_esg_max_process }
