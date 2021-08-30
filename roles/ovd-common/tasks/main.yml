@@ -34,6 +34,7 @@
     msg: "Using OVD version {{ ovd_version_detected }}"
 
 - name: Check OVD version
+  when: check_ovd_version | default('true') | bool
   assert:
     that:
       - ovd_version_detected is version('2.7', '>=')
