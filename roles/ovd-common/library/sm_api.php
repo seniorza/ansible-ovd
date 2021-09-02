@@ -154,7 +154,7 @@ abstract class Ansible {
 					}
 
 					// Convert strange ansible data structure to JSON
-					$value = str_replace('\'"\'"\'', "'", $value);
+					$value = preg_replace('/u?\'"\'"\'/', "'", $value);
 					$value = str_replace('"', '\"', $value);
 					$value = str_replace("'", '"', $value);
 					$value = preg_replace_callback(
