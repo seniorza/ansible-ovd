@@ -97,6 +97,7 @@
     - ovd_version_detected is version('3.0', '>=')
   block:
     - name: Install Microsoft Visual C++ 2008 SP1 Redistributable Package
+      when: ovd_version_detected is version('3.0.99', '<')
       win_chocolatey:
         name: vcredist2008
 
