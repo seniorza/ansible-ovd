@@ -186,26 +186,17 @@ abstract class Ansible {
 		$this->parameters = array_merge($this->parameters, self::$base_parameters);
 	}
 
-	private function init_parameters() {
+	private function init_parameters($args_) {
 		$this->options = [];
 
-		if (count($_SERVER["argv"]) < 2) {
-			throw new Exception('Parameter file is missing');
+		$args_ = json_decode ($args_, true);
+		if (!is_array($args_)) {
+			throw new Exception('Invalid arguments passed to the module. Expect JSON dict');
 		}
 
-		$data = file_get_contents($_SERVER["argv"][1]);
-		if (!$data) {
-			throw new Exception('Parameter file is empty');
-		}
+		// also check that array is dict and not list
 
-		preg_match_all('/([^=]+)=(?:\'((?:[^\']|\'"\'"\')+)\'|"((?:[^"]|"\'"\'")+)"|([^ ]+)) ?/', $data, $matches, PREG_SET_ORDER);
-		if (!$matches) {
-			throw new Exception('Parameter file is empty');
-		}
-
-		foreach ($matches as $item) {
-			$key = $item[1];
-			$value = $item[count($item) - 1];
+		foreach ($args_ as $key => $value) {
 			if (!isset($this->parameters[$key])) {
 				if (strpos($key, '_ansible_') === 0) {
 					continue;
@@ -237,39 +228,13 @@ abstract class Ansible {
 					$this->options[$key] = $value;
 					break;
 				case 'boolean':
-					if (in_array(strtolower($value), self::$string_boolean_false)) {
-						$this->options[$key] = false;
-					}
-					else if (in_array(strtolower($value), self::$string_boolean_true)) {
-						$this->options[$key] = true;
-					}
-					else {
+					if (!is_bool($value)) {
 						throw new Exception('Parameter "'.$key.'" expects type boolean. Type provided: '.var_export($value, true));
 					}
 
+					$this->options[$key] = $value;
 					break;
 				case 'dict':
-					if (substr($value, 0, 1) != '{' || substr($value, -1) != '}') {
-						throw new Exception('Parameter "'.$key.'" expects type dict (1). Type provided: '.var_export($value, true));
-					}
-
-					if (strlen($value) > 2 && strpos($value, '\'"\'"\'') === false) {
-						throw new Exception('Parameter "'.$key.'" expects type dict (2). Type provided: '.var_export($value, true));
-					}
-
-					// Convert strange ansible data structure to JSON
-					$value = str_replace('\'"\'"\'', "'", $value);
-					$value = str_replace('"', '\"', $value);
-					$value = str_replace("'", '"', $value);
-					$value = preg_replace_callback(
-						'/": (True|False|Null)(, |})/',
-						function ($matches) {
-							return strtolower($matches[0]);
-						},
-						$value
-					);
-
-					$value = json_decode ($value, true);
 					if (!is_array($value)) {
 						throw new Exception('Parameter "'.$key.'" expects type dict (3). Type provided: '.var_export($value, true));
 					}
@@ -294,10 +259,10 @@ abstract class Ansible {
 	}
 
 
-	public function run() {
+	public function run($args_) {
 		ob_start();
 		try {
-			$this->init_parameters();
+			$this->init_parameters($args_);
 			$result = $this->process();
 		}
 		catch (Exception $e) {
@@ -470,5 +435,9 @@ class AnsibleSm extends Ansible {
 	}
 }
 
+$args = <<<EOD
+<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>
+EOD;
+
 $ansible = new AnsibleSm();
-$ansible->run();
+$ansible->run($args);
