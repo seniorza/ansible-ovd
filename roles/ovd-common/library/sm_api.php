@@ -278,7 +278,7 @@ class AnsibleSm extends Ansible {
 			if ($config_modified && !$this->options['_ansible_check_mode']) {
 				$ret = $this->service->settings_set($config_modified);
 				if (!$ret) {
-					throw new Exception('settings_set returned unexpected value '.var_export($ret, false));
+					throw new Exception('settings_set returned unexpected value '.var_export($ret, true));
 				}
 			}
 		}
@@ -311,7 +311,7 @@ class AnsibleSm extends Ansible {
 				$b64 = base64_encode($data);
 				$ret = $this->service->certificate_add($b64);
 				if (!$ret) {
-					throw new Exception('certificate_add returned unexpected value '.var_export($ret, false));
+					throw new Exception('certificate_add returned unexpected value '.var_export($ret, true));
 				}
 			}
 		}
