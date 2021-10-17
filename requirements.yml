@@ -14,3 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+
+collections:
+  - ansible.posix
+  - ansible.windows
+  - chocolatey.chocolatey
+  - community.general
+  - community.mysql
+  - community.windows

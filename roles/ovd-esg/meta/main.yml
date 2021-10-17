@@ -18,6 +18,9 @@ dependencies:
   - { role: ovd-common }
   - { role: ovd-slave }
 
+collections:
+  - community.general
+
 galaxy_info:
   author: David PHAM-VAN
   description: Inuvika OVD Enterprise Gateway
