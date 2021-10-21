@@ -386,7 +386,7 @@ class AnsibleSm extends Ansible {
 			}
 
 			if ($config_modified && !$this->options['_ansible_check_mode']) {
-				$ret = $this->service->settings_set($new_settings);
+				$ret = $this->service->settings_set($config_modified);
 				if (!$ret) {
 					throw new Exception('settings_set returned unexpected value '.var_export($ret, false));
 				}

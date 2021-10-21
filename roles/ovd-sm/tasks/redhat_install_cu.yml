@@ -42,9 +42,7 @@
 
 - name: Update OVD Session Manager
   yum:
-    name:
-    - php-mbstring
-    - inuvika-ovd-session-manager
+    name: inuvika-ovd-session-manager
     state: latest
   when: sm_install_result is failed and ovd_sm_force_update|bool
   notify:
