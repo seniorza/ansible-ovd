@@ -130,9 +130,10 @@ abstract class Ansible {
 
 					$this->options[$key] = $value;
 					break;
+				case 'list':
 				case 'dict':
 					if (!is_array($value)) {
-						throw new Exception('Parameter "'.$key.'" expects type dict (3). Type provided: '.var_export($value, true));
+						throw new Exception('Parameter "'.$key.'" expects type '.$this->parameters[$key]['type'].' (3). Type provided: '.var_export($value, true));
 					}
 
 					$this->options[$key] = $value;
@@ -232,6 +233,16 @@ class AnsibleSm extends Ansible {
 			'required' => false,
 			'default' => null,
 		],
+		"populate" => [
+			'type' => 'boolean',
+			'required' => false,
+			'default' => false,
+		],
+		"populate_filter_apps" => [
+			'type' => 'list',
+			'required' => false,
+			'default' => [],
+		],
 	];
 
 	private $config = null;
@@ -249,6 +260,79 @@ class AnsibleSm extends Ansible {
 		}
 
 		return $sconfig["value"];
+	}
+
+	private function populate() {
+		$conf = $this->service->getInitialConfiguration();
+
+		$orgs = $this->service->organizations_list();
+		$org = null;
+		foreach ($orgs as $o) {
+			if ($o['default']) {
+				$org = $o['id'];
+				break;
+			}
+		}
+
+		if ($org != null) {
+			$org = array_shift($orgs);
+			$org = $org['id'];
+		}
+
+		$this->service->organization_select($org, true);
+
+		$servers = $this->service->servers_list("unregistered", false, []);
+		foreach($servers as $server) {
+			if (!$server["can_register"]) {
+				continue;
+			}
+
+			$this->service->server_register($server["id"]);
+			$this->service->server_switch_maintenance($server["id"], false);
+			$this->service->server_share($server["id"], $org);
+		}
+
+		$this->service->users_populate(false, null);
+		$ug_id = $this->service->users_group_add("All Users", "Default users group");
+		if ($ug_id == false) {
+			throw new Exception('populate: the user group already exists');
+		}
+
+		$this->service->system_set_default_users_group($ug_id);
+
+		foreach(['linux', 'windows'] as $os) {
+			$apps = array_filter(
+				$this->service->applications_list($os),
+				function($app) {
+					foreach($this->options["populate_filter_apps"] as $flt) {
+						if (stripos($app['executable_path'], $flt) !== false) {
+							return false;
+						}
+					}
+
+					return true;
+				}
+			);
+
+			if (!$apps) {
+				continue;
+			}
+
+			$apps = $this->service->applications_list("linux");
+			if (count($apps) > 0) {
+				$name = ucfirst($os)." applications";
+
+				$ag_id = $this->service->applications_group_add($name, $name);
+				if ($ag_id == false) {
+					throw new Exception('populate: the application group already exists');
+				}
+
+				$this->service->publication_add($ug_id, $ag_id);
+				foreach($apps as $app) {
+					$this->service->applications_group_add_application($app["id"], $ag_id);
+				}
+			}
+		}
 	}
 
 	protected function process() {
@@ -278,7 +362,7 @@ class AnsibleSm extends Ansible {
 			if ($config_modified && !$this->options['_ansible_check_mode']) {
 				$ret = $this->service->settings_set($config_modified);
 				if (!$ret) {
-					throw new Exception('settings_set returned unexpected value '.var_export($ret, false));
+					throw new Exception('settings_set returned unexpected value '.var_export($ret, true));
 				}
 			}
 		}
@@ -311,8 +395,15 @@ class AnsibleSm extends Ansible {
 				$b64 = base64_encode($data);
 				$ret = $this->service->certificate_add($b64);
 				if (!$ret) {
-					throw new Exception('certificate_add returned unexpected value '.var_export($ret, false));
+					throw new Exception('certificate_add returned unexpected value '.var_export($ret, true));
 				}
+			}
+		}
+
+		if ($this->options["populate"]) {
+			$changed = true;
+			if (!$this->options['_ansible_check_mode']) {
+				$this->populate();
 			}
 		}
 
