@@ -15,12 +15,13 @@
 # limitations under the License.
 ---
 - name: Configure Session Manager Database
-  template:
-    src: config.json
-    dest: /var/spool/ovd/session-manager/config
-    owner: '{{ apache_user_name }}'
-    group: '{{ apache_group_name }}'
-    mode: 0640
+  sm_api:
+    api: "{{ ovd_sm_admin_api | default('soap') }}"
+    user: "{{ ovd_sm_admin_login }}"
+    password: "{{ ovd_sm_admin_password }}"
+    settings:
+      general.sql.user: "{{ ovd_mysql_login }}"
+      general.sql.password: "{{ ovd_mysql_password }}"
   notify:
     - Setup Session Manager
   tags: [ovd, ovd-sm]

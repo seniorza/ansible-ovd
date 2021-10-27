@@ -1,5 +1,0 @@
-{
-    "general.sql.user": "{{ ovd_mysql_login }}",
-    "general.sql.password": "{{ ovd_mysql_password }}",
-    "general.encryption_key": "{{ ovd_sm_encryption_key }}"
-}
