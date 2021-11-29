@@ -18,6 +18,13 @@ dependencies:
   - { role: ovd-common }
   - { role: ovd-slave }
 
+collections:
+  - ansible.posix
+  - ansible.windows
+  - chocolatey.chocolatey
+  - community.general
+  - community.windows
+
 galaxy_info:
   author: David PHAM-VAN
   description: Inuvika OVD Application Server
