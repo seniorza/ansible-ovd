@@ -31,7 +31,7 @@
       - inuvika-ovd-www-{{ ovd_www_config }}
 
 - when: ovd_version_detected is version('3.0', '>=')
-  set_fact: ovd_sm_packages="{{ovd_sm_packages}} + [ 'inuvika-ovd-user-configuration' ]"
+  set_fact: ovd_sm_packages="{{ovd_sm_packages}} + [ 'inuvika-ovd-user-configuration', 'inuvika-ovd-l10n' ]"
 
 - include_tasks: debian.yml
   tags: [ovd, ovd-sm]
