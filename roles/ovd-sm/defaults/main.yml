@@ -20,7 +20,6 @@ ovd_mysql_login: ovd
 ovd_mysql_password: ovd
 ovd_mysql_database: ovd
 ovd_mysql_prefix: ovd_
-ovd_sm_encryption_key: '00000000000000000000000000000000'
 ovd_sm_force_update: false
 ovd_sm_remove_can_update: false
 # ovd_sm_register_in_production: false
