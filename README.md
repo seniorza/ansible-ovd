@@ -43,10 +43,13 @@ system requirements outlined in the [Installation and Configuration Guide](https
 
 ## Install Ansible and Inuvika OVD roles
 
-Please refer to the official documentation on <https://docs.ansible.com/ansible/latest/index.html>
+Installation of Inuvika OVD roles uses a Python Virtual Environment.
 
-We provide here the commands we use to get started, assuming
-`python pip` is already available on the system.
+**Requirements**:
+
+  * Git
+  * Python 3
+  * Python 3 venv module
 
 While Ansible cannot run on a Windows host, it can manage
 Windows hosts if executed on Windows under the Windows Subsystem
@@ -56,13 +59,51 @@ for Linux (WSL).
 > Ansible, or Inuvika. Inuvika recommends that it not be used for
 > production systems.
 
-To install Ansible using `pip`, use this commands:
+For more information about installing Ansible, please refer to the official
+documentation at <https://docs.ansible.com/ansible/latest/index.html>.
 
-```shell
-git clone https://github.com/inuvika/ansible-ovd
-cd ansible-ovd
-pip install --user -r requirements.pip
-```
+ 1. Clone the repository
+
+   ```shell
+   git clone https://github.com/inuvika/ansible-ovd
+   ```
+
+ 2. Navigate to the directory
+
+   ```shell
+   cd ansible-ovd
+   ```
+
+ 3. Create a Python Virtual Environment
+
+   ```shell
+   python3 -m venv py-env
+   ```
+
+ 4. Load the Python Virtual Environment
+
+   ```shell
+   . py-env/bin/activate
+   ```
+
+ 5. Update PIP
+
+   ```shell
+   pip install --upgrade pip
+   ```
+
+ 6. Install the PIP dependencies
+
+   ```shell
+   pip install --upgrade -r requirements.pip
+   ```
+
+ 7. When using ansible version >=2.10 (not default), install the Ansible
+    Collection requirements
+
+   ```shell
+   ansible-galaxy collection install -r requirements.yml
+   ```
 
 ## Version code
 

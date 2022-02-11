@@ -1,6 +1,5 @@
-# Copyright (C) 2018 Inuvika Inc.
+# Copyright (C) 2018-2021 Inuvika Inc.
 # https://www.inuvika.com
-# Author David PHAM-VAN <d.phamvan@inuvika.com> 2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ansible==2.9.9
+ansible>=2.9.9,<2.10
 pywinrm>=0.3.0
 requests
