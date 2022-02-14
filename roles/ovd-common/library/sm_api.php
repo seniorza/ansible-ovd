@@ -18,12 +18,29 @@
  * limitations under the License.
  */
 
+abstract class AdminApi {
+	protected $host;
+	protected $login;
+	protected $password;
 
-class AdminApi {
 	public function __construct($host_, $login_, $password_) {
 		$this->host = $host_;
 		$this->login = $login_;
 		$this->password = $password_;
+	}
+
+	abstract public function __call($func_, $args_);
+
+	public static function factory($mode_, $host_, $login_, $password_) {
+		$class = 'AdminAPI_'.ucfirst($mode_);
+		return new $class($host_, $login_, $password_);
+	}
+}
+
+
+class AdminAPI_Soap extends AdminApi {
+	public function __construct($host_, $login_, $password_) {
+		parent::__construct($host_, $login_, $password_);
 
 		$this->service = new SoapClient(
 			'https://' . $this->host . '/ovd/service/admin/wsdl',
@@ -44,6 +61,93 @@ class AdminApi {
 
 	public function __call($func_, $args_) {
 		return $this->service->__call($func_, $args_);
+	}
+}
+
+
+class AdminAPI_Rest extends AdminApi {
+	public function __construct($host_, $login_, $password_) {
+		parent::__construct($host_, $login_, $password_);
+
+		$this->base_url = 'https://'.$this->host.'/ovd/service/admin/';
+	}
+
+
+	public function __call($func_, $args_) {
+		$payload = null;
+		if ($args_) {
+			$payload = ['args' => $args_];
+		}
+
+		$res = $this->curl_request('POST', $func_, $payload);
+		if ($res['rc'] != 200) {
+			if (!isset($res['data']['error'])) {
+				throw new Exception('Communication error');
+			}
+			if (@$res['data']['error']['code'] == 'not_authorized') {
+				throw new Exception('You are not allowed to perform this action');
+			}
+
+			throw new APIException(
+				$res['data']['error']['code'],
+				@$res['data']['error']['message'],
+				$res['data']['error']
+			);
+		}
+
+		return $res['data'];
+	}
+
+	protected function curl_request($method, $url_, $data_in_ = null) {
+		$socket = curl_init($this->base_url.$url_);
+		curl_setopt($socket, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($socket, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($socket, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_setopt($socket, CURLOPT_CONNECTTIMEOUT, 10);
+		curl_setopt($socket, CURLOPT_FILETIME, true);
+		curl_setopt($socket, CURLOPT_CUSTOMREQUEST, $method);
+
+		$headers = ['Connection: close'];
+		if ($data_in_) {
+			curl_setopt($socket, CURLOPT_POSTFIELDS, json_encode($data_in_));
+			$headers []= 'Content-Type: application/json';
+		}
+
+		curl_setopt($socket, CURLOPT_HTTPHEADER, $headers);
+		curl_setopt($socket, CURLOPT_HEADER, 1);
+		curl_setopt($socket, CURLOPT_USERPWD, $this->login.':'.$this->password);
+
+		$data_out = curl_exec($socket);
+
+		$rc = curl_getinfo($socket, CURLINFO_HTTP_CODE);
+		$headers_size = curl_getinfo($socket, CURLINFO_HEADER_SIZE);
+		curl_close($socket);
+		$headers = substr($data_out, 0, $headers_size);
+		$body = substr($data_out, $headers_size);
+
+		$result = [
+			'rc' => $rc,
+		];
+
+		if (preg_match('#Content-Type: application/json(;|$)#i', $headers)) {
+			$result['data'] = json_decode($body, true);
+		}
+		else {
+			$result['raw'] = $body;
+		}
+
+		return $result;
+	}
+}
+
+class APIException extends Exception {
+	public $faultcode;
+	public $detail;
+
+	public function __construct($faultcode, $message, $detail=null) {
+		parent::__construct($message);
+		$this->faultcode = $faultcode;
+		$this->detail = $detail;
 	}
 }
 
@@ -205,6 +309,11 @@ abstract class Ansible {
 
 class AnsibleSm extends Ansible {
 	protected $parameters = [
+		"api" => [
+			'type' => 'string',
+			'required' => true,
+			'choices' => ["rest", "soap"],
+		],
 		"host" => [
 			'type' => 'string',
 			'required' => false,
@@ -336,7 +445,8 @@ class AnsibleSm extends Ansible {
 	}
 
 	protected function process() {
-		$this->service = new AdminApi(
+		$this->service = AdminApi::factory(
+			$this->options["api"],
 			$this->options["host"],
 			$this->options["user"],
 			$this->options["password"]
@@ -368,7 +478,7 @@ class AnsibleSm extends Ansible {
 		}
 
 		if ($this->options["purge_all_sessions"]) {
-			$sessions = $this->service->sessions_list();
+			$sessions = $this->service->sessions_list(null);
 			if ($sessions) {
 				$changed = true;
 				$diff['before']['purge_all_sessions'] = array_keys($sessions);
@@ -381,7 +491,7 @@ class AnsibleSm extends Ansible {
 						}
 
 						sleep(1);
-						$sessions = $this->service->sessions_list();
+						$sessions = $this->service->sessions_list(null);
 					}
 				}
 			}
