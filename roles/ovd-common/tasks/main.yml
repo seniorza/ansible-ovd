@@ -38,7 +38,7 @@
   assert:
     that:
       - ovd_version_detected is version('2.7', '>=')
-      - ovd_version_detected is version('3.1', '<')
+      - ovd_version_detected is version('3.2', '<')
     msg: "{{ ovd_version_detected }} is not supported"
 
 - name: Check that the OS is x86_64
