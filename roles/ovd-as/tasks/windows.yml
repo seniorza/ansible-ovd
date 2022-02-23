@@ -117,7 +117,7 @@
         name: vcredist2017
 
 - set_fact:
-    oas_setup_base: "{{ oas_setup_filename.result | splitext | first }}"
+    oas_setup_base: "Inuvika-OVD-{{ ovd_version }}-ApplicationServer"
 
 - name: Download OVD Windows Application Server
   win_get_url:
@@ -254,7 +254,7 @@
   block:
     - name: "Install Inuvika WebDAV driver: Store WebDAV driver filename into variable"
       set_fact:
-        ovd_webdav_setup_base: '{{ oas_setup_filename.result | replace("ApplicationServer", "webdavfs") | splitext | first }}'
+        ovd_webdav_setup_base: 'Inuvika-OVD-{{ ovd_version }}-webdavfs'
 
     - name: "Install Inuvika WebDAV driver : Download installer"
       win_get_url:
