@@ -22,7 +22,6 @@ The roles support the following servers:
 * Red Hat Enterprise Linux 7.x 64 bits
 * Ubuntu 18.04 LTS server (Bionic Beaver) 64 bits
 * Ubuntu 16.04 LTS server (Xenial Xerus) 64 bits
-* Ubuntu 14.04 LTS server (Trusty Tahr) 64 bits
 * Windows Server 2019
 * Windows Server 2016
 * Windows Server 2012 R2

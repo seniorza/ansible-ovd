@@ -142,29 +142,6 @@
     state: started
     enabled: yes
 
-- name: Apply "Linux Terminal preferences" KB
-  when:
-    - ansible_os_family == "Debian"
-    - ansible_distribution_release == "trusty"
-  block:
-    - name: Create GTK3 folders
-      file:
-        name: "{{ item }}"
-        state: directory
-      loop:
-        - /etc/xdg/gtk-3.0
-        - /usr/share/themes/Xfce/gtk-3.0
-
-    - name: Create GTK3 Settings
-      template:
-        dest: /etc/xdg/gtk-3.0/settings.ini
-        src: settings.ini
-
-    - name: Create GTK3 Style
-      template:
-        dest: /usr/share/themes/Xfce/gtk-3.0/gtk.css
-        src: gtk.css
-
 - name: Apply "User Isolation" KB
   when: ovd_as_isolation is defined and ovd_as_isolation|bool==true
   block:
