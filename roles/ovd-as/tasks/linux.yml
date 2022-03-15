@@ -41,9 +41,6 @@
       - xrdp-seamrdp
       - xrdp-sound
 
-- when: ansible_os_family == 'Debian'
-  set_fact: ovd_as_packages="{{ovd_as_packages}} + [ 'gtk3-engines-xfce' ]"
-
 - when: ovd_version_detected is version('3.0', '>=')
   set_fact: ovd_as_packages="{{ovd_as_packages}} + [ 'inuvika-ovd-message' ]"
 
