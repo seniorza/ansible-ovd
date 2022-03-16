@@ -59,17 +59,40 @@
       state: absent
       purge: yes
 
+- name: "SELinux"
+  when:
+    - ansible_os_family == 'RedHat'
+    - ansible_selinux.status != "disabled"
+  block:
+    - name: "SELinux : Change context of file dead.letter"
+      sefcontext:
+        target: "/var/lib/logcheck/dead.letter"
+        setype: mail_home_t
+        state: present
+      notify: Restore context deadletter
+
+    - name: "SELinux : Deploy policy"
+      block:
+      - name: "SELinux : Deploy policy : Copy policy to host"
+        ansible.builtin.copy:
+          src: ovd_aps.te
+          dest: /tmp/ovd_aps.te
+
+      - name: "SELinux : Deploy policy : Create type file"
+        ansible.builtin.command: checkmodule -M -m -o /tmp/ovd_aps.mod /tmp/ovd_aps.te
+
+      - name: "SELinux : Deploy policy : Package policy"
+        ansible.builtin.command: semodule_package -o /tmp/ovd_aps.pp -m /tmp/ovd_aps.mod
+
+      - name: "SELinux : Deploy policy : Install policy"
+        ansible.builtin.command: semodule -i /tmp/ovd_aps.pp
+
 - when: ansible_os_family == 'RedHat'
   block:
   - name: Install Ansible Dependencies
     yum:
       name: libselinux-python
       state: present
-  
-  - name: Disable SELinux
-    selinux:
-      state: disabled
-    when: ovd_disable_selinux|bool
   
   - name: Install Cups and Samba
     yum:

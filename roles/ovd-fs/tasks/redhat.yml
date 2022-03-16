@@ -25,3 +25,24 @@
     - inuvika-ovd-regular-union-fs
     - inuvika-ovd-slaveserver-role-fs
     state: latest
+
+- name: "SELinux : Configuration"
+  when: ansible_selinux.status != "disabled"
+  block:
+    - name: "SELinux : Configuration : Set booleans"
+      seboolean:
+        name: samba_share_fusefs
+        state: yes
+        persistent: yes
+
+    - name: "SELinux : Configuration : Allow Apache to listen on tcp port 1113"
+      seport:
+        ports: 1113
+        proto: tcp
+        setype: http_port_t
+
+    - name: "SELinux : Configuration : Change context of file dead.letter"
+      sefcontext:
+        target: "/var/lib/logcheck/dead.letter"
+        setype: mail_home_t
+      notify: Restore context deadletter

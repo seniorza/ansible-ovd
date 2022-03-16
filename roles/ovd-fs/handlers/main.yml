@@ -25,3 +25,6 @@
     name: '{{ samba_service_name }}'
     state: restarted
   tags: [ovd, ovd-fs]
+
+- name: "SELinux : Restore context deadletter"
+  ansible.builtin.command: restorecon -Rv "/var/lib/"

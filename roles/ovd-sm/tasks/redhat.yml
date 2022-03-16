@@ -48,6 +48,33 @@
   notify:
     - Configure Session Manager Database
 
+- name: "SELinux : Configuration"
+  when: ansible_selinux.status != "disabled"
+  block:
+    - name: "SELinux : Configuration : Allow Apache to listen on tcp ports 1111 and 1112"
+      seport:
+        ports: 1111,1112
+        proto: tcp
+        setype: http_port_t
+
+    - name: "SELinux : Configuration : Change context of files in /var/spool/ovd"
+      sefcontext:
+        target: "/var/spool/ovd(/.*)?"
+        setype: "httpd_sys_rw_content_t"
+      notify: Restore context ovd
+
+    - name: "SELinux : Configuration : Change context of files in /var/log/ovd/session-manager"
+      sefcontext:
+        target: "/var/log/ovd/session-manager(/.*)?"
+        setype: collectd_rw_content_t
+      notify: Restore context logs
+
+    - name: "SELinux : Configuration : Change context of files in /usr/lib/fontconfig/cache"
+      sefcontext:
+        target: "/usr/lib/fontconfig/cache(/.*)?"
+        setype: fonts_cache_t
+      notify: Restore context fontconfig
+
 - include_tasks: redhat_install_cu.yml
   when: not ovd_sm_remove_can_update|bool
 

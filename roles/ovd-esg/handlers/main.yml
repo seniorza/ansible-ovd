@@ -19,3 +19,6 @@
     name: ovd-slaveserver
     state: restarted
   tags: [ovd, ovd-esg]
+
+- name: "SELinux : Restore context deadletter"
+  ansible.builtin.command: restorecon -Rv "/var/lib/"

@@ -19,3 +19,10 @@
     name: "{{ ovd_wa_packages }}"
     state: latest
   tags: [ovd, ovd-wa]
+
+- name: "SELinux : Set boolean"
+  when: ansible_selinux.status != "disabled"
+  seboolean:
+    name: httpd_can_network_connect
+    state: yes
+    persistent: yes

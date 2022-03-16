@@ -15,7 +15,6 @@
 # limitations under the License.
 ---
 ovd_session_manager: 127.0.0.1
-ovd_disable_selinux: true
 # ovd_install_nfs: false
 # ovd_install_webdav: false
 ovd_install_msra: true

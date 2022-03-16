@@ -1,0 +1,11 @@
+module ovd_aps 1.0;
+
+require {
+        type cupsd_var_run_t;
+        type smbd_t;
+        class sock_file read;
+}
+
+#============= smbd_t ==============
+
+allow smbd_t cupsd_var_run_t:sock_file read;

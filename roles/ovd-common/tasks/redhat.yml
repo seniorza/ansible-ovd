@@ -44,3 +44,7 @@
     gpgcheck: yes
     state: present
     file: ovd
+
+- name: "SELinux : Install dependencies"
+  yum:
+    name: policycoreutils-python

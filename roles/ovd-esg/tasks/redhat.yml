@@ -18,3 +18,12 @@
   yum:
     name: inuvika-ovd-slaveserver-role-gateway
     state: latest
+
+- name: "SELinux : Configuration"
+  when: ansible_selinux.status != "disabled"
+  block:
+    - name: "SELinux : Configuration : Change context of file dead.letter"
+      sefcontext:
+        target: "/var/lib/logcheck/dead.letter"
+        setype: mail_home_t
+      notify: Restore context deadletter
