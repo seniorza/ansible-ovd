@@ -64,6 +64,7 @@
     - { option: admin_redirection, value: '{{ "ovd_esg_admin_redirection" if ovd_version_detected is version("2.9", "<") else "" }}' }
     - { option: admin_host, value: '{{ "ovd_esg_admin_host" if ovd_version_detected is version("2.9", ">=") else "" }}' }
     - { option: root_redirection, value: ovd_esg_root_redirection }
+    - { option: certificate_path, value: '{{ "ovd_esg_certificate_path" if ovd_version_detected is version("3.1.90", ">=") else "" }}' }
     - { option: http_keep_alive, value: ovd_esg_http_keep_alive }
     - { option: disable_sslv2, value: ovd_esg_disable_sslv2 }
     - { option: force_buffering, value: ovd_esg_force_buffering }
