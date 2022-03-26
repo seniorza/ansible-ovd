@@ -1,0 +1,9 @@
+module ovd_sm 1.0;
+
+require {
+        type httpd_t;
+        type fonts_cache_t;
+        class dir setattr;
+}
+
+allow httpd_t fonts_cache_t:dir setattr;

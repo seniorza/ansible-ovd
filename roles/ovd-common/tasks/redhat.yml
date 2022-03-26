@@ -45,6 +45,44 @@
     state: present
     file: ovd
 
-- name: "SELinux : Install dependencies"
+- name: "SELinux : Install tool for configuration"
   yum:
     name: policycoreutils-python
+
+- name: "SELinux Apache-fpm : Configuration"
+  when: ovd_www_config == 'apache-fpm'
+  block:
+    - name: "SELinux : Deploy policy"
+      block:
+      - name: "SELinux : Deploy policy : Copy policy to host"
+        copy:
+          src: ovd_php-fpm.te
+          dest: /tmp/ovd_php-fpm.te
+
+      - name: "SELinux : Deploy policy : Create type file"
+        command: checkmodule -M -m -o /tmp/ovd_php-fpm.mod /tmp/ovd_php-fpm.te
+
+      - name: "SELinux : Deploy policy : Package policy"
+        command: semodule_package -o /tmp/ovd_php-fpm.pp -m /tmp/ovd_php-fpm.mod
+
+      - name: "SELinux : Deploy policy : Install policy"
+        command: semodule -i /tmp/ovd_php-fpm.pp
+
+
+- name: "SELinux other policies"
+  block:
+    - name: "SELinux : Deploy policy"
+      block:
+      - name: "SELinux : Deploy policy : Copy policy to host"
+        copy:
+          src: ovd_other.te
+          dest: /tmp/ovd_other.te
+
+      - name: "SELinux : Deploy policy : Create type file"
+        command: checkmodule -M -m -o /tmp/ovd_other.mod /tmp/ovd_other.te
+
+      - name: "SELinux : Deploy policy : Package policy"
+        command: semodule_package -o /tmp/ovd_other.pp -m /tmp/ovd_other.mod
+
+      - name: "SELinux : Deploy policy : Install policy"
+        command: semodule -i /tmp/ovd_other.pp

@@ -64,28 +64,27 @@
     - ansible_os_family == 'RedHat'
     - ansible_selinux.status != "disabled"
   block:
-    - name: "SELinux : Change context of file dead.letter"
+    - name: "SELinux : Change context of dir /var/spool/xrdp_printer"
       sefcontext:
-        target: "/var/lib/logcheck/dead.letter"
-        setype: mail_home_t
+        target: "/var/spool/xrdp_printer(/.*)"
+        setype: print_spool_t
         state: present
-      notify: Restore context deadletter
 
     - name: "SELinux : Deploy policy"
       block:
       - name: "SELinux : Deploy policy : Copy policy to host"
-        ansible.builtin.copy:
+        copy:
           src: ovd_aps.te
           dest: /tmp/ovd_aps.te
 
       - name: "SELinux : Deploy policy : Create type file"
-        ansible.builtin.command: checkmodule -M -m -o /tmp/ovd_aps.mod /tmp/ovd_aps.te
+        command: checkmodule -M -m -o /tmp/ovd_aps.mod /tmp/ovd_aps.te
 
       - name: "SELinux : Deploy policy : Package policy"
-        ansible.builtin.command: semodule_package -o /tmp/ovd_aps.pp -m /tmp/ovd_aps.mod
+        command: semodule_package -o /tmp/ovd_aps.pp -m /tmp/ovd_aps.mod
 
       - name: "SELinux : Deploy policy : Install policy"
-        ansible.builtin.command: semodule -i /tmp/ovd_aps.pp
+        command: semodule -i /tmp/ovd_aps.pp
 
 - when: ansible_os_family == 'RedHat'
   block:

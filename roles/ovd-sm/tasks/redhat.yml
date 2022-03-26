@@ -61,19 +61,42 @@
       sefcontext:
         target: "/var/spool/ovd(/.*)?"
         setype: "httpd_sys_rw_content_t"
-      notify: Restore context ovd
 
     - name: "SELinux : Configuration : Change context of files in /var/log/ovd/session-manager"
       sefcontext:
         target: "/var/log/ovd/session-manager(/.*)?"
         setype: collectd_rw_content_t
-      notify: Restore context logs
 
     - name: "SELinux : Configuration : Change context of files in /usr/lib/fontconfig/cache"
       sefcontext:
         target: "/usr/lib/fontconfig/cache(/.*)?"
         setype: fonts_cache_t
-      notify: Restore context fontconfig
+
+    - name: "SELinux : Configuration : Change context of config.inc.php"
+      sefcontext:
+        target: "/etc/ovd/session-manager(/.*)?"
+        setype: "httpd_sys_rw_content_t"
+
+    - name:  "SELinux : Configuration : Change context of /etc/ovd/session-manager/sessionmanager.cron"
+      sefcontext:
+        target: "/etc/ovd/session-manager/sessionmanager.cron"
+        setype: "system_cron_spool_t"
+
+    - name: "SELinux : Deploy policy"
+      block:
+      - name: "SELinux : Deploy policy : Copy policy to host"
+        copy:
+          src: ovd_sm.te
+          dest: /tmp/ovd_sm.te
+
+      - name: "SELinux : Deploy policy : Create type file"
+        command: checkmodule -M -m -o /tmp/ovd_sm.mod /tmp/ovd_sm.te
+
+      - name: "SELinux : Deploy policy : Package policy"
+        command: semodule_package -o /tmp/ovd_sm.pp -m /tmp/ovd_sm.mod
+
+      - name: "SELinux : Deploy policy : Install policy"
+        command: semodule -i /tmp/ovd_sm.pp
 
 - include_tasks: redhat_install_cu.yml
   when: not ovd_sm_remove_can_update|bool

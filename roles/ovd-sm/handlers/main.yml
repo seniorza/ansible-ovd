@@ -88,11 +88,10 @@
     state: restarted
   tags: [ovd, ovd-sm]
 
-- name: "SELinux : Restore context ovd"
-  ansible.builtin.command: restorecon -Rv "/var/spool/"
+- name: "SELinux : Restore context spool"
+  command: restorecon -Rv "/var/spool/"
 
-- name: "SELinux : Restore context logs"
-  ansible.builtin.command: restorecon -Rv "/var/log/ovd/"
-
-- name: "SELinux : Restore context fontconfig"
-  ansible.builtin.command: restorecon -Rv "/usr/lib/fontconfig/"
+- name: "SELinux : Change the httpd_t domain to enforcing"
+  selinux_permissive:
+    name: httpd_t
+    permissive: false

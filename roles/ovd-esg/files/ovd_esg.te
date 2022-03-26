@@ -1,15 +1,11 @@
-module ovd_aps 1.0;
+module ovd_esg 1.0;
 
 require {
-        type cupsd_var_run_t;
-        type smbd_t;
         type logwatch_mail_t;
         type logwatch_cache_t;
         class dir { add_name write };
         class file { append create getattr open };
-        class sock_file read;
 }
 
-allow smbd_t cupsd_var_run_t:sock_file read;
 allow logwatch_mail_t logwatch_cache_t:dir { add_name write };
 allow logwatch_mail_t logwatch_cache_t:file { append create getattr open };
