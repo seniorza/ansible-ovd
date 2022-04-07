@@ -189,6 +189,7 @@ abstract class Ansible {
 	private function init_parameters($args_) {
 		$this->options = [];
 
+		$args_ = str_replace(["\n", "\r"], ["\\n", "\\r"], $args_);
 		$args_ = json_decode ($args_, true);
 		if (!is_array($args_)) {
 			throw new Exception('Invalid arguments passed to the module. Expect JSON dict');
