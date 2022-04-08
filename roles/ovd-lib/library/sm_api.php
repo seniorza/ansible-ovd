@@ -483,7 +483,11 @@ class AnsibleSm extends Ansible {
 			$this->organization_selected = $org;
 		}
 
-		$this->service->organization_select($this->organization_selected, true);
+		$this->service->organization_select(null, true);
+		$servers = $this->service->servers_list(null, false, []);
+		foreach($servers as $server) {
+			$this->service->server_share($server["id"], $this->organization_selected);
+		}
 
 		$servers = $this->service->servers_list("unregistered", false, []);
 		foreach($servers as $server) {
@@ -495,6 +499,8 @@ class AnsibleSm extends Ansible {
 			$this->service->server_switch_maintenance($server["id"], false);
 			$this->service->server_share($server["id"], $this->organization_selected);
 		}
+
+		$this->service->organization_select($this->organization_selected, true);
 
 		$this->service->users_populate(false, null);
 		$ug_id = $this->service->users_group_add("All Users", "Default users group");
