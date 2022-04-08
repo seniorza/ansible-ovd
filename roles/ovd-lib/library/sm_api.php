@@ -353,8 +353,14 @@ class AnsibleSm extends Ansible {
 			'required' => false,
 			'default' => [],
 		],
+		"organization" => [
+			'type' => 'dict',
+			'required' => false,
+			'default' => [],
+		],
 	];
 
+	private $organization_selected = false;
 	private $config = null;
 	private $service;
 
@@ -373,23 +379,27 @@ class AnsibleSm extends Ansible {
 	}
 
 	private function populate() {
-		$conf = $this->service->getInitialConfiguration();
+		if (!$this->organization_selected) {
+			$conf = $this->service->getInitialConfiguration();
 
-		$orgs = $this->service->organizations_list();
-		$org = null;
-		foreach ($orgs as $o) {
-			if ($o['default']) {
-				$org = $o['id'];
-				break;
+			$orgs = $this->service->organizations_list();
+			$org = null;
+			foreach ($orgs as $o) {
+				if ($o['default']) {
+					$org = $o['id'];
+					break;
+				}
 			}
+
+			if ($org != null) {
+				$org = array_shift($orgs);
+				$org = $org['id'];
+			}
+
+			$this->organization_selected = $org;
 		}
 
-		if ($org != null) {
-			$org = array_shift($orgs);
-			$org = $org['id'];
-		}
-
-		$this->service->organization_select($org, true);
+		$this->service->organization_select($this->organization_selected, true);
 
 		$servers = $this->service->servers_list("unregistered", false, []);
 		foreach($servers as $server) {
@@ -399,7 +409,7 @@ class AnsibleSm extends Ansible {
 
 			$this->service->server_register($server["id"]);
 			$this->service->server_switch_maintenance($server["id"], false);
-			$this->service->server_share($server["id"], $org);
+			$this->service->server_share($server["id"], $this->organization_selected);
 		}
 
 		$this->service->users_populate(false, null);
@@ -445,6 +455,73 @@ class AnsibleSm extends Ansible {
 		}
 	}
 
+
+	private function organization_from_name($name) {
+		$orgs = $this->service->organizations_list();
+
+		foreach ($orgs as $o) {
+			if ($name == $o['name']) {
+				return $o;
+			}
+		}
+
+		return null;
+	}
+
+
+	private function organization_present($param) {
+		$org = $this->organization_from_name(@$param['name']);
+		if ($org) {
+			# Updating existing organization if change needed
+			$param['id'] = $org['id'];
+
+			foreach (['name', 'description', 'max_ccu', 'domains'] as $attrib) {
+				if (isset($param[$attrib]) and $param[$attrib] != $org[$attrib]) {
+					if (!$this->service->organization_modify($param)) {
+						throw new Exception('organization_present: Unable to update organization');
+					}
+					return ['changed' => true];
+				}
+			}
+			return ['changed' => false];
+		}
+
+		# Creating new organization
+		if (!$this->service->organization_add($param)) {
+			throw new Exception('organization_present: Unable to add organization');
+		}
+
+		return ['changed' => true];
+	}
+
+
+	private function organization_absent($param) {
+		$org = $this->organization_from_name(@$param['name']);
+		if (!$org) {
+			return ['changed' => false];
+		}
+
+		if (!$this->service->organization_remove($org['id'])) {
+			throw new Exception('organization_absent: Unable to remove organization');
+		}
+
+		return ['changed' => true];
+	}
+
+	private function organization_select($param) {
+		$org = $this->organization_from_name(@$param['name']);
+		if (!$org) {
+			throw new Exception('organization_select: Organization does not exist');
+		}
+
+		if (!$this->service->organization_select($org['id'], true)) {
+			throw new Exception('organization_select: Unable to select organization');
+		}
+
+		$this->organization_selected = $org['id'];
+	}
+
+
 	protected function process() {
 		$this->service = AdminApi::factory(
 			$this->options["api"],
@@ -455,6 +532,37 @@ class AnsibleSm extends Ansible {
 
 		$changed = false;
 		$diff = [];
+
+		if ($this->options["organization"]) {
+			$param = $this->options["organization"];
+			$changed = true;
+			if (!$this->options['_ansible_check_mode']) {
+				if (!@$param['state']) {
+					throw new Exception('state missing in organization parameter');
+				}
+
+				if (!@$param['name']) {
+					throw new Exception('name missing in organization parameter');
+				}
+
+				switch($param['state']) {
+					case 'select':
+						$ret = $this->organization_select($param);
+						break;
+
+					case 'present':
+						$ret = $this->organization_present($param);
+						break;
+
+					case 'absent':
+						$ret = $this->organization_absent($param);
+						break;
+
+					default:
+						throw new Exception('"state" invalid in organization parameter. valid values are "present","absent","select"');
+				}
+			}
+		}
 
 		if ($this->options["settings"]) {
 			$config_modified = [];
@@ -518,7 +626,10 @@ class AnsibleSm extends Ansible {
 			}
 		}
 
-		$ret = ["changed" => $changed];
+		if (!isset($ret["changed"])) {
+			$ret = ["changed" => $changed];
+		}
+
 		if ($this->options['_ansible_diff'] && !$this->options['_ansible_no_log']) {
 			$ret['diff'] = $diff;
 		}
