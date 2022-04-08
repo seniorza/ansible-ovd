@@ -70,6 +70,7 @@ class AdminAPI_Rest extends AdminApi {
 		parent::__construct($host_, $login_, $password_);
 
 		$this->base_url = 'https://'.$this->host.'/ovd/service/admin/';
+		$this->cookies = [];
 	}
 
 
@@ -107,6 +108,18 @@ class AdminAPI_Rest extends AdminApi {
 		curl_setopt($socket, CURLOPT_FILETIME, true);
 		curl_setopt($socket, CURLOPT_CUSTOMREQUEST, $method);
 
+		if ($this->cookies) {
+			$cookie_string = '';
+			foreach ($this->cookies as $k => $v) {
+				$cookie_string.= $k.'='.$v.'; ';
+			}
+
+			curl_setopt($socket, CURLOPT_COOKIE, $cookie_string);
+		}
+		else {
+			curl_setopt($socket, CURLOPT_USERPWD, $this->login.':'.$this->password);
+		}
+
 		$headers = ['Connection: close'];
 		if ($data_in_) {
 			curl_setopt($socket, CURLOPT_POSTFIELDS, json_encode($data_in_));
@@ -115,7 +128,6 @@ class AdminAPI_Rest extends AdminApi {
 
 		curl_setopt($socket, CURLOPT_HTTPHEADER, $headers);
 		curl_setopt($socket, CURLOPT_HEADER, 1);
-		curl_setopt($socket, CURLOPT_USERPWD, $this->login.':'.$this->password);
 
 		$data_out = curl_exec($socket);
 
@@ -125,15 +137,87 @@ class AdminAPI_Rest extends AdminApi {
 		$headers = substr($data_out, 0, $headers_size);
 		$body = substr($data_out, $headers_size);
 
+		return $this->parse_result($rc, $headers, $body);
+	}
+
+
+	protected function parse_result($code, $headers, $body) {
 		$result = [
-			'rc' => $rc,
+			'rc' => $code,
+			'headers' => [],
 		];
+
+		preg_match_all('@^([^:\n]+): (.*)$@m', $headers, $matches, PREG_SET_ORDER);
+
+		foreach ($matches as $item) {
+			if (array_key_exists($item[1], $result['headers'])) {
+				$result['headers'][$item[1]] = [
+					$result['headers'][$item[1]],
+					trim($item[2]),
+				];
+			}
+			else {
+				$result['headers'][$item[1]] = trim($item[2]);
+			}
+		}
 
 		if (preg_match('#Content-Type: application/json(;|$)#i', $headers)) {
 			$result['data'] = json_decode($body, true);
 		}
 		else {
 			$result['raw'] = $body;
+		}
+
+		if (isset($result['data']['message'])) {
+			$this->last_error_message = $result['data']['message'];
+		} else {
+			$this->last_error_message = str_replace(
+				'{code}', $code,
+				_('Unexpected response: {code}')
+			);
+		}
+
+		if (isset($result['headers']['Set-Cookie'])) {
+			$items = is_array($result['headers']['Set-Cookie']) ? $result['headers']['Set-Cookie'] : [$result['headers']['Set-Cookie']];
+
+			foreach ($items as $item) {
+				$header_item = self::parse_cookie_line($item);
+
+				foreach ($header_item['cookies'] as $name => $value) {
+					$this->cookies[$name] = $value;
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	private static function parse_cookie_line($cookie_line_) {
+		$result = [
+			'cookies' => [],
+			'expires' => 0,
+			'path'    => '',
+			'domain'  => '',
+		];
+
+		$items = explode(';', $cookie_line_);
+
+		foreach ($items as $item) {
+			$sub_item = explode('=', $item, 2);
+
+			if (count($sub_item)<2) {
+				continue;
+			}
+
+			$key   = trim($sub_item[0]);
+			$value = trim($sub_item[1]);
+
+			if (in_array($key, ['version', 'path', 'expires', 'domain'])) {
+				$result[$key] = $value;
+			}
+			else {
+				$result['cookies'][$key] = $value;
+			}
 		}
 
 		return $result;
