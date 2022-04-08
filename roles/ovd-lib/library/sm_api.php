@@ -503,9 +503,15 @@ class AnsibleSm extends Ansible {
 		$this->service->organization_select($this->organization_selected, true);
 
 		$this->service->users_populate(false, null);
-		$ug_id = $this->service->users_group_add("All Users", "Default users group");
-		if ($ug_id == false) {
-			throw new Exception('populate: the user group already exists');
+		$group = $this->service->users_groups_list_partial("All Users", ["name"], null);
+		if ($group['data']) {
+			$ug_id = reset($group['data'])['id'];
+		}
+		else {
+			$ug_id = $this->service->users_group_add("All Users", "Default users group");
+			if ($ug_id == false) {
+				throw new Exception('populate: the user group already exists');
+			}
 		}
 
 		$this->service->system_set_default_users_group($ug_id);
@@ -533,13 +539,11 @@ class AnsibleSm extends Ansible {
 				$name = ucfirst($os)." applications";
 
 				$ag_id = $this->service->applications_group_add($name, $name);
-				if ($ag_id == false) {
-					throw new Exception('populate: the application group already exists');
-				}
-
-				$this->service->publication_add($ug_id, $ag_id);
-				foreach($apps as $app) {
-					$this->service->applications_group_add_application($app["id"], $ag_id);
+				if ($ag_id) {
+					$this->service->publication_add($ug_id, $ag_id);
+					foreach($apps as $app) {
+						$this->service->applications_group_add_application($app["id"], $ag_id);
+					}
 				}
 			}
 		}
