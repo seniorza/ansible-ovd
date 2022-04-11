@@ -534,7 +534,7 @@ class AnsibleSm extends Ansible {
 				continue;
 			}
 
-			$apps = $this->service->applications_list("linux");
+			$apps = $this->service->applications_list($os);
 			if (count($apps) > 0) {
 				$name = ucfirst($os)." applications";
 
