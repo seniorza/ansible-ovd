@@ -704,11 +704,8 @@ class AnsibleSm extends Ansible {
 			$changed = true;
 
 			if (!$this->options['_ansible_check_mode']) {
-				$data = @file_get_contents($this->options["subscription_key"]);
-				$b64 = base64_encode($data);
-				$ret = $this->service->certificate_add($b64);
-				if (!$ret) {
-					throw new Exception('certificate_add returned unexpected value '.var_export($ret, true));
+				if ($this->service->certificate_add($this->options["subscription_key"]) == 1) {
+					throw new Exception('certificate_add returned unexpected value');
 				}
 			}
 		}
