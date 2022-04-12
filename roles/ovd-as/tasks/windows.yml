@@ -28,6 +28,17 @@
     start_mode: auto
     state: started
 
+- name: "Configure Windows Firewall for OVD"
+  when: ovd_system_fw is not defined
+  win_firewall_rule:
+    name: OVD 1112
+    description: "Inuvika OVD tcp port 1112"
+    protocol: tcp
+    direction: in
+    localport: 1112
+    action: allow
+    state: present
+
 - name: Wait for no scheduled tasks
   win_shell: Get-ScheduledTask | Where TaskPath -like "*TaskScheduler*"
   register: result
