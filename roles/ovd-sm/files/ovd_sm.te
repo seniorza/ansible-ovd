@@ -3,7 +3,16 @@ module ovd_sm 1.0;
 require {
         type httpd_t;
         type fonts_cache_t;
-        class dir setattr;
+        type pulseaudio_t, system_dbusd_t, useradd_t, httpd_sys_rw_content_t, initrc_var_run_t, fusefs_t, initrc_state_t;
+        class file { read write append getattr open create lock write};
+        class dir { read write add_name create setattr };
 }
 
 allow httpd_t fonts_cache_t:dir setattr;
+allow useradd_t httpd_sys_rw_content_t : file { write };
+allow system_dbusd_t httpd_sys_rw_content_t : file { append };
+allow pulseaudio_t httpd_sys_rw_content_t : file { read write };
+allow pulseaudio_t fusefs_t:dir { create read write add_name };
+allow pulseaudio_t initrc_var_run_t:file { read write };
+allow pulseaudio_t fusefs_t:file { create read getattr open lock write };
+allow pulseaudio_t initrc_state_t:file { read write getattr };

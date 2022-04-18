@@ -17,15 +17,15 @@
 - name: "SELinux : Configuration"
   when: ansible_selinux.status != "disabled"
   block:
-    - name: "SELinux : Configuration : Set boolean for samba"
-      seboolean:
-        name: samba_share_fusefs
-        state: yes
-        persistent: yes
-
     - name: "SELinux : Configuration : Set boolean for httpd"
       seboolean:
         name: httpd_use_fusefs
+        state: yes
+        persistent: yes
+
+    - name: "SELinux : Configuration : Set boolean for samba"
+      seboolean:
+        name: samba_share_fusefs
         state: yes
         persistent: yes
 
