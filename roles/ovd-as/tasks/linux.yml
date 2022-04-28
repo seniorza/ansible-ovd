@@ -41,7 +41,7 @@
       - xrdp-seamrdp
       - xrdp-sound
 
-- when: ovd_version_detected is version('3.0', '>=')
+- when: ovd_version is version('3.0', '>=')
   set_fact: ovd_as_packages="{{ovd_as_packages}} + [ 'inuvika-ovd-message' ]"
 
 - when: ansible_os_family == 'Debian'
@@ -115,7 +115,7 @@
       state: latest
 
   - name: Enable and start the XRDP services
-    when: ovd_version_detected is version('3.0.99', '>=')
+    when: ovd_version is version('3.0.99', '>=')
     service:
       name: "{{ item }}"
       state: started
@@ -174,7 +174,7 @@
 
 - name: Fix "pulseaudio 8.0 compatibility with User Process Isolation"
   when:
-    - ovd_version_detected is version('3.0', '>=')
+    - ovd_version is version('3.0', '>=')
     - ansible_distribution_release == "xenial"
     - ovd_best_practices is defined and ovd_best_practices|bool==true
   block:

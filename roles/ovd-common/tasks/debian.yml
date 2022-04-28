@@ -18,7 +18,7 @@
   assert:
     that:
       - ansible_distribution_release in ('xenial', 'bionic')
-    msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is not supported by OVD {{ ovd_version_detected }}"
+    msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is not supported by OVD {{ ovd_version }}"
 
 - name: Update APT cache
   apt:
