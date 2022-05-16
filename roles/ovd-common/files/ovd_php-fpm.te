@@ -1,0 +1,14 @@
+module ovd_php-fpm 1.0;
+require {
+        type httpd_t, var_spool_t, httpd_tmp_t;
+        class dir { add_name remove_name write };
+        class sock_file create;
+}
+
+type_transition httpd_t var_spool_t: sock_file httpd_tmp_t "ovd-user-configuration.sock";
+type_transition httpd_t var_spool_t: sock_file httpd_tmp_t "ovd-session-manager.sock";
+type_transition httpd_t var_spool_t: sock_file httpd_tmp_t "ovd-administration-console.sock";
+type_transition httpd_t var_spool_t: sock_file httpd_tmp_t "ovd-web-access.sock";
+
+allow httpd_t var_spool_t: sock_file create;
+allow httpd_t var_spool_t: dir { add_name remove_name write };

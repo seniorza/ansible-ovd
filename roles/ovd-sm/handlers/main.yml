@@ -87,3 +87,11 @@
     name: '{{ mysql_service_name }}'
     state: restarted
   tags: [ovd, ovd-sm]
+
+- name: "SELinux : Restore context spool"
+  command: restorecon -Rv "/var/spool/"
+
+- name: "SELinux : Change the httpd_t domain to enforcing"
+  selinux_permissive:
+    name: httpd_t
+    permissive: false
