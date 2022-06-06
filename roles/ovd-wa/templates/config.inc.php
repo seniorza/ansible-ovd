@@ -45,6 +45,7 @@ define('SESSIONMANAGER_HOST', '{{ ovd_session_manager }}');
 // define('OPTION_FORCE_SSO', false);
 // default is false
 
+{% if ovd_version is version("3.1.90", "<") %}
 // Option force SAML2: do not let the user enter a login and password the user is redirected th the Identity Provider.
 // define('OPTION_FORCE_SAML2', true);
 // define('OPTION_FORCE_SAML2', false);
@@ -53,6 +54,7 @@ define('SESSIONMANAGER_HOST', '{{ ovd_session_manager }}');
 // Option SAML2 Recirection Uri: Set the address of the Assertion Consumer Service (Acs).
 // define(SAML2_REDIRECT_URI, 'https://www.example.com');
 // default is automatic detection
+{% endif %}
 
 // Enable/disable debug mode
 //  define('DEBUG_MODE', true);
