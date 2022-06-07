@@ -70,15 +70,6 @@
   notify:
     - Configure Session Manager Database
 
-- name: Push the subscription key to the server
-  copy:
-    src: "{{ ovd_sm_subscription_key }}"
-    dest: "{{ ovd_sm_subscription_key_path }}"
-  tags: [ovd, ovd-sm]
-  when: ovd_sm_subscription_key is defined
-  notify:
-    - Install the subscription key on the server
-
 - name: Switch new server to production
   sm_api:
     api: "{{ ovd_sm_admin_api }}"
