@@ -18,7 +18,7 @@
   assert:
     that:
       - ansible_distribution_major_version == '7'
-    msg: "{{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported by OVD {{ ovd_version_detected }}"
+    msg: "{{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported by OVD {{ ovd_version }}"
 
 - block:
   - name: Install the EPEL repository
@@ -37,8 +37,8 @@
 
 - name: Add OVD Repository
   yum_repository:
-    name: ovd-{{ ovd_version_detected }}
-    description: Inuvika OVD {{ ovd_version_detected }}
+    name: ovd-{{ ovd_version }}
+    description: Inuvika OVD {{ ovd_version }}
     baseurl: '{{ ovd_repo }}/rhel/{{ ansible_distribution_major_version }}/'
     gpgkey: '{{ ovd_repo }}/keyring'
     gpgcheck: yes

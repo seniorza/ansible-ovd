@@ -28,18 +28,18 @@
   changed_when: false
 
 - set_fact:
-    ovd_version_detected: '{{ oas_setup_filename.result | regex_search("(\d+\.[^-]+)") | replace("~", ".") }}'
+    ovd_version: '{{ oas_setup_filename.result | regex_search("(\d+\.[^-]+)") | replace("~", ".") }}'
 
 - debug:
-    msg: "Using OVD version {{ ovd_version_detected }}"
+    msg: "Using OVD version {{ ovd_version }}"
 
 - name: Check OVD version
   when: check_ovd_version | default('true') | bool
   assert:
     that:
-      - ovd_version_detected is version('2.8', '>=')
-      - ovd_version_detected is version('3.2', '<')
-    msg: "{{ ovd_version_detected }} is not supported"
+      - ovd_version is version('2.8', '>=')
+      - ovd_version is version('3.2', '<')
+    msg: "{{ ovd_version }} is not supported"
 
 - name: Check that the OS is x86_64
   assert:
@@ -56,7 +56,7 @@
 - name: Set the default OVD Administration API method
   when: ovd_sm_admin_api is not defined
   set_fact:
-    ovd_sm_admin_api: "{{ 'soap' if ovd_version_detected is version('3.0.99', '<') else 'rest' }}"
+    ovd_sm_admin_api: "{{ 'soap' if ovd_version is version('3.0.99', '<') else 'rest' }}"
 
 - name: Check the "ovd_sm_admin_api" setting value
   assert:
