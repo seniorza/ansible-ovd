@@ -70,6 +70,7 @@ class AdminAPI_Rest extends AdminApi {
 		parent::__construct($host_, $login_, $password_);
 
 		$this->base_url = 'https://'.$this->host.'/ovd/service/admin/';
+		$this->cookies = [];
 	}
 
 
@@ -107,6 +108,18 @@ class AdminAPI_Rest extends AdminApi {
 		curl_setopt($socket, CURLOPT_FILETIME, true);
 		curl_setopt($socket, CURLOPT_CUSTOMREQUEST, $method);
 
+		if ($this->cookies) {
+			$cookie_string = '';
+			foreach ($this->cookies as $k => $v) {
+				$cookie_string.= $k.'='.$v.'; ';
+			}
+
+			curl_setopt($socket, CURLOPT_COOKIE, $cookie_string);
+		}
+		else {
+			curl_setopt($socket, CURLOPT_USERPWD, $this->login.':'.$this->password);
+		}
+
 		$headers = ['Connection: close'];
 		if ($data_in_) {
 			curl_setopt($socket, CURLOPT_POSTFIELDS, json_encode($data_in_));
@@ -115,7 +128,6 @@ class AdminAPI_Rest extends AdminApi {
 
 		curl_setopt($socket, CURLOPT_HTTPHEADER, $headers);
 		curl_setopt($socket, CURLOPT_HEADER, 1);
-		curl_setopt($socket, CURLOPT_USERPWD, $this->login.':'.$this->password);
 
 		$data_out = curl_exec($socket);
 
@@ -125,15 +137,87 @@ class AdminAPI_Rest extends AdminApi {
 		$headers = substr($data_out, 0, $headers_size);
 		$body = substr($data_out, $headers_size);
 
+		return $this->parse_result($rc, $headers, $body);
+	}
+
+
+	protected function parse_result($code, $headers, $body) {
 		$result = [
-			'rc' => $rc,
+			'rc' => $code,
+			'headers' => [],
 		];
+
+		preg_match_all('@^([^:\n]+): (.*)$@m', $headers, $matches, PREG_SET_ORDER);
+
+		foreach ($matches as $item) {
+			if (array_key_exists($item[1], $result['headers'])) {
+				$result['headers'][$item[1]] = [
+					$result['headers'][$item[1]],
+					trim($item[2]),
+				];
+			}
+			else {
+				$result['headers'][$item[1]] = trim($item[2]);
+			}
+		}
 
 		if (preg_match('#Content-Type: application/json(;|$)#i', $headers)) {
 			$result['data'] = json_decode($body, true);
 		}
 		else {
 			$result['raw'] = $body;
+		}
+
+		if (isset($result['data']['message'])) {
+			$this->last_error_message = $result['data']['message'];
+		} else {
+			$this->last_error_message = str_replace(
+				'{code}', $code,
+				_('Unexpected response: {code}')
+			);
+		}
+
+		if (isset($result['headers']['Set-Cookie'])) {
+			$items = is_array($result['headers']['Set-Cookie']) ? $result['headers']['Set-Cookie'] : [$result['headers']['Set-Cookie']];
+
+			foreach ($items as $item) {
+				$header_item = self::parse_cookie_line($item);
+
+				foreach ($header_item['cookies'] as $name => $value) {
+					$this->cookies[$name] = $value;
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	private static function parse_cookie_line($cookie_line_) {
+		$result = [
+			'cookies' => [],
+			'expires' => 0,
+			'path'    => '',
+			'domain'  => '',
+		];
+
+		$items = explode(';', $cookie_line_);
+
+		foreach ($items as $item) {
+			$sub_item = explode('=', $item, 2);
+
+			if (count($sub_item)<2) {
+				continue;
+			}
+
+			$key   = trim($sub_item[0]);
+			$value = trim($sub_item[1]);
+
+			if (in_array($key, ['version', 'path', 'expires', 'domain'])) {
+				$result[$key] = $value;
+			}
+			else {
+				$result['cookies'][$key] = $value;
+			}
 		}
 
 		return $result;
@@ -189,6 +273,7 @@ abstract class Ansible {
 	private function init_parameters($args_) {
 		$this->options = [];
 
+		$args_ = str_replace(["\n", "\r"], ["\\n", "\\r"], $args_);
 		$args_ = json_decode ($args_, true);
 		if (!is_array($args_)) {
 			throw new Exception('Invalid arguments passed to the module. Expect JSON dict');
@@ -352,8 +437,14 @@ class AnsibleSm extends Ansible {
 			'required' => false,
 			'default' => [],
 		],
+		"organization" => [
+			'type' => 'dict',
+			'required' => false,
+			'default' => [],
+		],
 	];
 
+	private $organization_selected = false;
 	private $config = null;
 	private $service;
 
@@ -372,23 +463,31 @@ class AnsibleSm extends Ansible {
 	}
 
 	private function populate() {
-		$conf = $this->service->getInitialConfiguration();
+		if (!$this->organization_selected) {
+			$conf = $this->service->getInitialConfiguration();
 
-		$orgs = $this->service->organizations_list();
-		$org = null;
-		foreach ($orgs as $o) {
-			if ($o['default']) {
-				$org = $o['id'];
-				break;
+			$orgs = $this->service->organizations_list();
+			$org = null;
+			foreach ($orgs as $o) {
+				if ($o['default']) {
+					$org = $o['id'];
+					break;
+				}
 			}
+
+			if ($org != null) {
+				$org = array_shift($orgs);
+				$org = $org['id'];
+			}
+
+			$this->organization_selected = $org;
 		}
 
-		if ($org != null) {
-			$org = array_shift($orgs);
-			$org = $org['id'];
+		$this->service->organization_select(null, true);
+		$servers = $this->service->servers_list(null, false, []);
+		foreach($servers as $server) {
+			$this->service->server_share($server["id"], $this->organization_selected);
 		}
-
-		$this->service->organization_select($org, true);
 
 		$servers = $this->service->servers_list("unregistered", false, []);
 		foreach($servers as $server) {
@@ -398,13 +497,21 @@ class AnsibleSm extends Ansible {
 
 			$this->service->server_register($server["id"]);
 			$this->service->server_switch_maintenance($server["id"], false);
-			$this->service->server_share($server["id"], $org);
+			$this->service->server_share($server["id"], $this->organization_selected);
 		}
 
+		$this->service->organization_select($this->organization_selected, true);
+
 		$this->service->users_populate(false, null);
-		$ug_id = $this->service->users_group_add("All Users", "Default users group");
-		if ($ug_id == false) {
-			throw new Exception('populate: the user group already exists');
+		$group = $this->service->users_groups_list_partial("All Users", ["name"], null);
+		if ($group['data']) {
+			$ug_id = reset($group['data'])['id'];
+		}
+		else {
+			$ug_id = $this->service->users_group_add("All Users", "Default users group");
+			if ($ug_id == false) {
+				throw new Exception('populate: the user group already exists');
+			}
 		}
 
 		$this->service->system_set_default_users_group($ug_id);
@@ -427,22 +534,87 @@ class AnsibleSm extends Ansible {
 				continue;
 			}
 
-			$apps = $this->service->applications_list("linux");
+			$apps = $this->service->applications_list($os);
 			if (count($apps) > 0) {
 				$name = ucfirst($os)." applications";
 
 				$ag_id = $this->service->applications_group_add($name, $name);
-				if ($ag_id == false) {
-					throw new Exception('populate: the application group already exists');
-				}
-
-				$this->service->publication_add($ug_id, $ag_id);
-				foreach($apps as $app) {
-					$this->service->applications_group_add_application($app["id"], $ag_id);
+				if ($ag_id) {
+					$this->service->publication_add($ug_id, $ag_id);
+					foreach($apps as $app) {
+						$this->service->applications_group_add_application($app["id"], $ag_id);
+					}
 				}
 			}
 		}
 	}
+
+
+	private function organization_from_name($name) {
+		$orgs = $this->service->organizations_list();
+
+		foreach ($orgs as $o) {
+			if ($name == $o['name']) {
+				return $o;
+			}
+		}
+
+		return null;
+	}
+
+
+	private function organization_present($param) {
+		$org = $this->organization_from_name(@$param['name']);
+		if ($org) {
+			# Updating existing organization if change needed
+			$param['id'] = $org['id'];
+
+			foreach (['name', 'description', 'max_ccu', 'domains'] as $attrib) {
+				if (isset($param[$attrib]) and $param[$attrib] != $org[$attrib]) {
+					if (!$this->service->organization_modify($param)) {
+						throw new Exception('organization_present: Unable to update organization');
+					}
+					return ['changed' => true];
+				}
+			}
+			return ['changed' => false];
+		}
+
+		# Creating new organization
+		if (!$this->service->organization_add($param)) {
+			throw new Exception('organization_present: Unable to add organization');
+		}
+
+		return ['changed' => true];
+	}
+
+
+	private function organization_absent($param) {
+		$org = $this->organization_from_name(@$param['name']);
+		if (!$org) {
+			return ['changed' => false];
+		}
+
+		if (!$this->service->organization_remove($org['id'])) {
+			throw new Exception('organization_absent: Unable to remove organization');
+		}
+
+		return ['changed' => true];
+	}
+
+	private function organization_select($param) {
+		$org = $this->organization_from_name(@$param['name']);
+		if (!$org) {
+			throw new Exception('organization_select: Organization does not exist');
+		}
+
+		if (!$this->service->organization_select($org['id'], true)) {
+			throw new Exception('organization_select: Unable to select organization');
+		}
+
+		$this->organization_selected = $org['id'];
+	}
+
 
 	protected function process() {
 		$this->service = AdminApi::factory(
@@ -454,6 +626,37 @@ class AnsibleSm extends Ansible {
 
 		$changed = false;
 		$diff = [];
+
+		if ($this->options["organization"]) {
+			$param = $this->options["organization"];
+			$changed = true;
+			if (!$this->options['_ansible_check_mode']) {
+				if (!@$param['state']) {
+					throw new Exception('state missing in organization parameter');
+				}
+
+				if (!@$param['name']) {
+					throw new Exception('name missing in organization parameter');
+				}
+
+				switch($param['state']) {
+					case 'select':
+						$ret = $this->organization_select($param);
+						break;
+
+					case 'present':
+						$ret = $this->organization_present($param);
+						break;
+
+					case 'absent':
+						$ret = $this->organization_absent($param);
+						break;
+
+					default:
+						throw new Exception('"state" invalid in organization parameter. valid values are "present","absent","select"');
+				}
+			}
+		}
 
 		if ($this->options["settings"]) {
 			$config_modified = [];
@@ -501,11 +704,8 @@ class AnsibleSm extends Ansible {
 			$changed = true;
 
 			if (!$this->options['_ansible_check_mode']) {
-				$data = @file_get_contents($this->options["subscription_key"]);
-				$b64 = base64_encode($data);
-				$ret = $this->service->certificate_add($b64);
-				if (!$ret) {
-					throw new Exception('certificate_add returned unexpected value '.var_export($ret, true));
+				if ($this->service->certificate_add($this->options["subscription_key"]) == 1) {
+					throw new Exception('certificate_add returned unexpected value');
 				}
 			}
 		}
@@ -517,7 +717,10 @@ class AnsibleSm extends Ansible {
 			}
 		}
 
-		$ret = ["changed" => $changed];
+		if (!isset($ret["changed"])) {
+			$ret = ["changed" => $changed];
+		}
+
 		if ($this->options['_ansible_diff'] && !$this->options['_ansible_no_log']) {
 			$ret['diff'] = $diff;
 		}

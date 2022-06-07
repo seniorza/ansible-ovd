@@ -18,8 +18,8 @@
   assert:
     that:
       - ansible_distribution_release in ('xenial', 'bionic')
-      - ansible_distribution_release != 'xenial' or ovd_version_detected is version('3.1.99', '<=')
-    msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is not supported by OVD {{ ovd_version_detected }}"
+      - ansible_distribution_release != 'xenial' or ovd_version is version('3.1.99', '<=')
+    msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is not supported by OVD {{ ovd_version }}"
 
 - name: Update APT cache
   apt:

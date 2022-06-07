@@ -18,7 +18,7 @@
   assert:
     that:
       - ansible_distribution_major_version == '7'
-    msg: "{{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported by OVD {{ ovd_version_detected }}"
+    msg: "{{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported by OVD {{ ovd_version }}"
 
 - block:
   - name: Install the EPEL repository
@@ -37,10 +37,33 @@
 
 - name: Add OVD Repository
   yum_repository:
-    name: ovd-{{ ovd_version_detected }}
-    description: Inuvika OVD {{ ovd_version_detected }}
+    name: ovd-{{ ovd_version }}
+    description: Inuvika OVD {{ ovd_version }}
     baseurl: '{{ ovd_repo }}/rhel/{{ ansible_distribution_major_version }}/'
     gpgkey: '{{ ovd_repo }}/keyring'
     gpgcheck: yes
     state: present
     file: ovd
+
+- name: "SELinux : Install tool for configuration"
+  yum:
+    name: policycoreutils-python
+
+- name: "SELinux Apache-fpm : Configuration"
+  when: ovd_www_config == 'apache-fpm'
+  block:
+    - name: "SELinux : Deploy policy"
+      block:
+      - name: "SELinux : Deploy policy : Copy policy to host"
+        copy:
+          src: ovd_php-fpm.te
+          dest: /tmp/ovd_php-fpm.te
+
+      - name: "SELinux : Deploy policy : Create type file"
+        command: checkmodule -M -m -o /tmp/ovd_php-fpm.mod /tmp/ovd_php-fpm.te
+
+      - name: "SELinux : Deploy policy : Package policy"
+        command: semodule_package -o /tmp/ovd_php-fpm.pp -m /tmp/ovd_php-fpm.mod
+
+      - name: "SELinux : Deploy policy : Install policy"
+        command: semodule -i /tmp/ovd_php-fpm.pp

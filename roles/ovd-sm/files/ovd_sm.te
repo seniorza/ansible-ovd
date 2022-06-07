@@ -1,0 +1,11 @@
+module ovd_sm 1.0;
+
+require {
+        type useradd_t, httpd_sys_rw_content_t;
+        type httpd_t, fonts_cache_t;
+        class file write;
+        class dir setattr;
+
+}
+allow useradd_t httpd_sys_rw_content_t: file write;
+allow httpd_t fonts_cache_t: dir setattr;

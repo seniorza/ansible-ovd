@@ -14,6 +14,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
+- name: "SELinux : Configuration"
+  when: ansible_selinux.status != "disabled"
+  block:
+    - name: "SELinux : Configuration : Set boolean for httpd"
+      seboolean:
+        name: httpd_use_fusefs
+        state: yes
+        persistent: yes
+
+    - name: "SELinux : Configuration : Set boolean for samba"
+      seboolean:
+        name: samba_share_fusefs
+        state: yes
+        persistent: yes
+
+    - name: "SELinux : Configuration : Allow Apache to listen on tcp port 1113"
+      seport:
+        ports: 1113
+        proto: tcp
+        setype: http_port_t
+
+    - name: "SELinux : Configuration : Change context of /var/lib/ovd/slaveserver/fileserver-data"
+      sefcontext:
+        target: "/var/lib/ovd/slaveserver/fileserver-data(/.*)?"
+        setype: httpd_user_rw_content_t
+
+    - name: "SELinux : Deploy policy"
+      block:
+      - name: "SELinux : Deploy policy : Copy policy to host"
+        copy:
+          src: ovd_fs.te
+          dest: /tmp/ovd_fs.te
+
+      - name: "SELinux : Deploy policy : Create type file"
+        command: checkmodule -M -m -o /tmp/ovd_fs.mod /tmp/ovd_fs.te
+
+      - name: "SELinux : Deploy policy : Package policy"
+        command: semodule_package -o /tmp/ovd_fs.pp -m /tmp/ovd_fs.mod
+
+      - name: "SELinux : Deploy policy : Install policy"
+        command: semodule -i /tmp/ovd_fs.pp
+
 - name: Install Samba
   yum:
     name: samba

@@ -1,0 +1,21 @@
+module ovd_aps 1.0;
+
+require {
+        type smbd_t, cupsd_var_run_t;
+        type logwatch_mail_t, logwatch_cache_t;
+        type pulseaudio_t, httpd_sys_rw_content_t, system_dbusd_t;
+        type initrc_var_run_t, fusefs_t, initrc_state_t;
+        class file { append create getattr lock open read write };
+        class dir { add_name create read setattr write };
+        class sock_file read;
+}
+
+allow smbd_t cupsd_var_run_t:sock_file read;
+allow logwatch_mail_t logwatch_cache_t:dir { add_name write };
+allow logwatch_mail_t logwatch_cache_t:file { append create getattr open };
+allow system_dbusd_t httpd_sys_rw_content_t: file { append };
+allow pulseaudio_t httpd_sys_rw_content_t: file { read write };
+allow pulseaudio_t fusefs_t:dir { add_name create read write };
+allow pulseaudio_t initrc_var_run_t:file { read write };
+allow pulseaudio_t fusefs_t:file { create getattr lock open read write };
+allow pulseaudio_t initrc_state_t:file { getattr read write };

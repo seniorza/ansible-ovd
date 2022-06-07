@@ -43,7 +43,7 @@
     api: "{{ ovd_sm_admin_api }}"
     user: "{{ ovd_sm_admin_login }}"
     password: "{{ ovd_sm_admin_password }}"
-    subscription_key: "{{ ovd_sm_subscription_key_path }}"
+    subscription_key: "{{ lookup('file', ovd_sm_subscription_key) | b64encode }}"
   tags: [ovd, ovd-sm]
   when: ovd_sm_subscription_key is defined
 
@@ -87,3 +87,11 @@
     name: '{{ mysql_service_name }}'
     state: restarted
   tags: [ovd, ovd-sm]
+
+- name: "SELinux : Restore context spool"
+  command: restorecon -Rv "/var/spool/"
+
+- name: "SELinux : Change the httpd_t domain to enforcing"
+  selinux_permissive:
+    name: httpd_t
+    permissive: false

@@ -18,3 +18,22 @@
   yum:
     name: inuvika-ovd-slaveserver-role-gateway
     state: latest
+
+- name: "SELinux : Configuration"
+  when: ansible_selinux.status != "disabled"
+  block:
+    - name: "SELinux : Deploy policy"
+      block:
+      - name: "SELinux : Deploy policy : Copy policy to host"
+        copy:
+          src: ovd_esg.te
+          dest: /tmp/ovd_esg.te
+
+      - name: "SELinux : Deploy policy : Create type file"
+        command: checkmodule -M -m -o /tmp/ovd_esg.mod /tmp/ovd_esg.te
+
+      - name: "SELinux : Deploy policy : Package policy"
+        command: semodule_package -o /tmp/ovd_esg.pp -m /tmp/ovd_esg.mod
+
+      - name: "SELinux : Deploy policy : Install policy"
+        command: semodule -i /tmp/ovd_esg.pp
