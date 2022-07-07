@@ -19,7 +19,7 @@
     name: inuvika-ovd-slaveserver-role-gateway
     state: latest
   notify:
-    - Restart OVD Slaveserver
+    - Restart Slaveserver
 
 - name: "SELinux : Configuration"
   when: ansible_selinux.status != "disabled"

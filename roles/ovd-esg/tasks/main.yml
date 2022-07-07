@@ -39,7 +39,7 @@
     name: Gateway
     state: present
   notify:
-    - Restart OVD Slaveserver
+    - Restart Slaveserver
   tags: [ovd, ovd-esg]
 
 - name: Configure OVD Gateway
@@ -51,7 +51,7 @@
     state: '{{ "absent" if lookup("vars", item.value, default="") == "" else "present" }}'
     mode: 0644
   notify:
-    - Restart OVD Slaveserver
+    - Restart Slaveserver
   loop:
     - { option: web_client, value: ovd_webaccess_url }
     - { option: ovd_esg_address, value: ovd_esg_address }

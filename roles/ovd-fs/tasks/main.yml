@@ -50,7 +50,7 @@
     name: FileServer
     state: present
   notify:
-    - Restart OVD Slaveserver
+    - Restart Slaveserver
   tags: [ovd, ovd-fs]
 
 - name: Configure OVD File Server
@@ -62,7 +62,7 @@
     state: '{{ "absent" if lookup("vars", item.value, default="") == "" else "present" }}'
     mode: 0644
   notify:
-    - Restart OVD Slaveserver
+    - Restart Slaveserver
   loop:
     - { option: thread_count, value: ovd_fs_thread_count }
     - { option: user, value: ovd_fs_user }
