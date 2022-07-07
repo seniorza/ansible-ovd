@@ -113,6 +113,8 @@
     yum:
       name: "{{ ovd_as_packages }}"
       state: latest
+    notify:
+      - Restart OVD Slaveserver
 
   - name: Enable and start the XRDP services
     when: ovd_version is version('3.0.99', '>=')
