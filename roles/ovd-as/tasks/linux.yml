@@ -37,12 +37,14 @@
       - xrdp-printer
       - xrdp-python
       - xrdp-rdpdr
-      - xrdp-scim
       - xrdp-seamrdp
       - xrdp-sound
 
 - when: ovd_version is version('3.0', '>=')
   set_fact: ovd_as_packages="{{ovd_as_packages}} + [ 'inuvika-ovd-message' ]"
+
+- when: ovd_version is version('3.1.90', '<')
+  set_fact: ovd_as_packages="{{ovd_as_packages}} + [ 'xrdp-scim' ]"
 
 - when: ansible_os_family == 'Debian'
   block:
