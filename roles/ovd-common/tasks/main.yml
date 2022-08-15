@@ -18,17 +18,9 @@
   set_fact:
     ovd_as_isolation: true
 
-- name: Detect Ovd Windows Application setup URL
-  local_action: get_windows_aps_url ovd_url="{{ ovd_repo }}"
-  vars:
-    ansible_become: no
-    ansible_connection: local
-    ansible_python_interpreter: "{{ ansible_playbook_python | default(ansible_python.executable) }}"
-  register: oas_setup_filename
-  changed_when: false
-
-- set_fact:
-    ovd_version: '{{ oas_setup_filename.result | regex_search("(\d+\.[^-]+)") | replace("~", ".") }}'
+- name: Read version manifest
+  set_fact:
+    ovd_version: "{{ (lookup('url', ovd_repo + '/manifest.yml', split_lines=false) | from_yaml).version }}"
 
 - debug:
     msg: "Using OVD version {{ ovd_version }}"
