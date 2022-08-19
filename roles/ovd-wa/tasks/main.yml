@@ -23,6 +23,23 @@
   failed_when: false
   tags: [ovd, ovd-wa]
 
+- when:
+    - ovd_version is version('3.1.90.1.sprint', '>=')
+    - ansible_os_family != 'RedHat' or ansible_distribution_major_version != '7'
+    - ovd_wa_www_config == 'auto'
+  set_fact:
+    ovd_wa_www_config: bridge
+
+- when:
+    - ovd_wa_www_config == 'auto'
+  set_fact:
+    ovd_wa_www_config: tomcat
+
+- name: Check the "ovd_wa_www_config" setting value
+  assert:
+    that:
+      - ovd_wa_www_config in ('tomcat', 'bridge')
+
 - set_fact:
     ovd_wa_packages:
       - inuvika-ovd-web-access
@@ -31,6 +48,12 @@
       - inuvika-ovd-web-access-ajaxplorer
       - inuvika-ovd-www-{{ ovd_www_config }}
       - inuvika-php-tank
+
+- when: ovd_wa_www_config == 'bridge'
+  set_fact: ovd_wa_packages="{{ ovd_wa_packages + [ 'inuvika-ovd-guacamole-bridge' ] }}"
+
+- when: ovd_wa_www_config == 'tomcat'
+  set_fact: ovd_wa_packages="{{ ovd_wa_packages + [ tomcat_service_name ] }}"
 
 - include_tasks: debian.yml
   when: ansible_os_family == "Debian"
@@ -49,9 +72,21 @@
     mode: 0640
   tags: [ovd, ovd-wa]
 
+- name: Check installed package
+  package_facts:
+
 - name: Ensure Tomcat is started
+  when: ansible_facts.packages | select('match', '^%s$'|format(tomcat_service_name)) | list
   service:
     name: "{{ tomcat_service_name }}"
+    state: started
+    enabled: yes
+  tags: [ovd, ovd-wa]
+
+- name: Ensure Guacamole-bridge is started
+  when: ansible_facts.packages | select("match", "inuvika-ovd-guacamole-bridge") | list
+  service:
+    name: guacamole-bridge
     state: started
     enabled: yes
   tags: [ovd, ovd-wa]

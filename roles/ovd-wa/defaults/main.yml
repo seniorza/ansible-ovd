@@ -15,6 +15,7 @@
 # limitations under the License.
 ---
 ovd_session_manager: 127.0.0.1
+ovd_wa_www_config: 'auto'
 
 apache2_ServerLimit: 1024
 apache2_StartServers: 5
