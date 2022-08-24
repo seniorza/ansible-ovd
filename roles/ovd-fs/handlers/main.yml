@@ -14,12 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ---
-- name: Restart OVD Slaveserver
-  service:
-    name: ovd-slaveserver
-    state: restarted
-  tags: [ovd, ovd-fs]
-
 - name: Restart Samba
   service:
     name: '{{ samba_service_name }}'

@@ -67,3 +67,5 @@
     - inuvika-ovd-regular-union-fs
     - inuvika-ovd-slaveserver-role-fs
     state: latest
+  notify:
+    - Restart Slaveserver

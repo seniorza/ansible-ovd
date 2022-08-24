@@ -18,6 +18,8 @@
   yum:
     name: inuvika-ovd-slaveserver-role-gateway
     state: latest
+  notify:
+    - Restart Slaveserver
 
 - name: "SELinux : Configuration"
   when: ansible_selinux.status != "disabled"

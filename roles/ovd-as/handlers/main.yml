@@ -19,9 +19,3 @@
     name: OVD
     state: restarted
   tags: [ovd, ovd-as]
-
-- name: Restart OVD Slaveserver
-  service:
-    name: ovd-slaveserver
-    state: restarted
-  tags: [ovd, ovd-as]

@@ -113,6 +113,8 @@
     yum:
       name: "{{ ovd_as_packages }}"
       state: latest
+    notify:
+      - Restart Slaveserver
 
   - name: Enable and start the XRDP services
     when: ovd_version is version('3.0.99', '>=')
@@ -132,7 +134,7 @@
     name: ApplicationServer
     state: present
   notify:
-    - Restart OVD Slaveserver
+    - Restart Slaveserver
 
 - name: Configure Ovd Application Server
   ini_file:
@@ -143,7 +145,7 @@
     state: '{{ "absent" if lookup("vars", item.value, default="") == "" else "present" }}'
     mode: 0644
   notify:
-    - Restart OVD Slaveserver
+    - Restart Slaveserver
   loop:
     - { option: thread_count, value: ovd_as_thread_count }
     - { option: checkShell, value: ovd_as_check_shell }
