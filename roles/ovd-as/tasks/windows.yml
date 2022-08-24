@@ -255,6 +255,11 @@
   win_feature:
     name: NFS-Client
     state: present
+  register: install_nfs
+
+- name: Reboot after NFS install
+  win_reboot:
+  when: install_nfs.reboot_required
 
 - name: Install Inuvika WebDAV driver
   when: ovd_install_webdav is defined and ovd_install_webdav|bool==true
@@ -299,3 +304,8 @@
   win_feature:
     name: Remote-Assistance
     state: present
+  register: install_msra
+
+- name: Reboot after Remote-Assistance install
+  win_reboot:
+  when: install_msra.reboot_required
