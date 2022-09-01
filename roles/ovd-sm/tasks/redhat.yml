@@ -57,15 +57,21 @@
         proto: tcp
         setype: http_port_t
 
-   - name: "SELinux : Configuration : Set boolean to allow Apache to connect to AD/LDAP server"
+    - name: "SELinux : Configuration : Set boolean to allow Apache to connect to AD/LDAP server"
       seboolean:
         name: httpd_can_connect_ldap
         state: yes
         persistent: yes
 
-   - name: "SELinux : Configuration : Set boolean to allow http daemon to send mail"
+    - name: "SELinux : Configuration : Set boolean to allow http daemon to send mail"
       seboolean:
         name: httpd_can_sendmail
+        state: yes
+        persistent: yes
+
+    - name: "SELinux : Configuration : Set boolean to allow password change"
+      seboolean:
+        name: nis_enabled
         state: yes
         persistent: yes
 
