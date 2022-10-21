@@ -24,7 +24,7 @@
   tags: [ovd, ovd-wa]
 
 - when:
-    - ovd_version is version('3.1.90.1.sprint', '>=')
+    - ovd_version is version('3.1.90', '>=')
     - ansible_os_family != 'RedHat' or ansible_distribution_major_version != '7'
     - ovd_wa_www_config == 'auto'
   set_fact:
