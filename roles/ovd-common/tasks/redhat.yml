@@ -45,13 +45,13 @@
     state: present
     file: ovd
 
-- name: "SELinux : Install tool for configuration"
-  yum:
-    name: policycoreutils-python
-
 - name: "SELinux Apache-fpm : Configuration"
   when: ovd_www_config == 'apache-fpm'
   block:
+    - name: "SELinux : Install tool for configuration"
+      yum:
+        name: policycoreutils-python
+
     - name: "SELinux : Deploy policy"
       block:
       - name: "SELinux : Deploy policy : Copy policy to host"

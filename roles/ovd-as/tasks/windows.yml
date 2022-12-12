@@ -55,10 +55,7 @@
     include_sub_features: yes
     include_management_tools: yes
   register: install_rds
-
-- name: Reboot after RDS install
-  win_reboot:
-  when: install_rds.reboot_required
+  notify: "Reboot if requested by win_feature"
 
 - name: Configure RDS
   win_shell: |
@@ -255,6 +252,8 @@
   win_feature:
     name: NFS-Client
     state: present
+  register: install_nfs
+  notify: "Reboot if requested by win_feature"
 
 - name: Install Inuvika WebDAV driver
   when: ovd_install_webdav is defined and ovd_install_webdav|bool==true
@@ -299,3 +298,5 @@
   win_feature:
     name: Remote-Assistance
     state: present
+  register: install_msra
+  notify: "Reboot if requested by win_feature"
