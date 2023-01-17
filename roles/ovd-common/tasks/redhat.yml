@@ -21,12 +21,6 @@
     msg: "{{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported by OVD {{ ovd_version }}"
 
 - block:
-  - name: Install the EPEL repository
-    yum:
-      name: "{{ epel7_url }}"
-      state: present
-
-- block:
   - name: Install the subscription-manager package
     yum:
       name: subscription-manager
@@ -34,6 +28,16 @@
   - name: Enable the Optional Repository Channel
     command: subscription-manager repos --enable=rhel-7-server-optional-rpms
   when: ansible_distribution in ['RedHat', 'Red Hat Enterprise Linux']
+
+- name: Install the EPEL repository
+  block:
+    - rpm_key:
+        state: present
+        key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-{{ ansible_distribution_major_version }}
+
+    - yum:
+        name: https://download.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+        state: present
 
 - name: Add OVD Repository
   yum_repository:
