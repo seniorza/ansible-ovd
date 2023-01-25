@@ -21,8 +21,17 @@
     msg: "{{ ansible_distribution }} {{ ansible_distribution_major_version }} is not supported by OVD {{ ovd_version }}"
 
 - name: Enable the Optional Repository Channel
-  command: subscription-manager repos --enable=rhel-7-server-optional-rpms
-  when: ansible_distribution in ['RedHat', 'Red Hat Enterprise Linux']
+  when:
+   - ansible_distribution in ['RedHat', 'Red Hat Enterprise Linux']
+   - ansible_distribution_major_version == '7'
+  block:
+    - name: Check rhel subscription status
+      command: subscription-manager list
+      register: rhel_subs
+
+    - name: Enable the Optional Repository Channel if subscribed
+      when: "'Subscribed' in rhel_subs.stdout"
+      command: subscription-manager repos --enable=rhel-7-server-optional-rpms
 
 - name: Install the EPEL repository
   block:
