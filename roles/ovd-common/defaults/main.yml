@@ -17,7 +17,6 @@
 # The '{VERSION_CODE}' value is a constant and is not intended to be substituted
 ovd_version_code: '{VERSION_CODE}'
 ovd_repo: http://archive.inuvika.com/ovd/{{ ovd_version_code }}
-epel7_url: https://download.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 
 ovd_www_config: "apache-mod"
 # Allowed values: apache-mod, apache-fpm
