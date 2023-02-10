@@ -17,7 +17,7 @@
 - name: Check the OS version
   assert:
     that:
-      - ansible_distribution_release in ('xenial', 'bionic')
+      - ansible_distribution_release in ('xenial', 'bionic', 'jammy')
       - ansible_distribution_release != 'xenial' or ovd_version is version('3.1.99', '<=')
     msg: "{{ ansible_distribution }} {{ ansible_distribution_version }} is not supported by OVD {{ ovd_version }}"
 
@@ -36,7 +36,17 @@
     name: apt-transport-https
     state: present
 
+- name: Install OVD Keyring (after jammy)
+  when: ansible_distribution_release in ('jammy')
+  get_url:
+    url: "{{ ovd_repo }}/keyring"
+    dest: /etc/apt/trusted.gpg.d/inuvika.asc
+    mode: '0644'
+    force: true
+    sha256sum: ff8fc09d8425c38c3c78b67213761db98c536adea2bcca44350b34a7a69179de
+
 - name: Install OVD Keyring
+  when: ansible_distribution_release in ('xenial', 'bionic')
   apt_key:
     url: "{{ ovd_repo }}/keyring"
     id: 3712DDAC
