@@ -38,7 +38,7 @@
   ini_file:
     section: mysqld
     option: max_connections
-    value: 500
+    value: "500"
     dest: /etc/mysql/my.cnf
   notify:
     - Reload MySQL
