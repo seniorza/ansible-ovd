@@ -124,7 +124,7 @@
     oas_setup_base: "Inuvika-OVD-{{ ovd_version }}-ApplicationServer"
 
 - name: Download OVD Windows Application Server
-  win_get_url:
+  ansible.windows.win_get_url:
     url: '{{ ovd_repo }}/{{ oas_setup_base }}.{{ ovd_as_setup_type }}'
     dest: '%TEMP%\{{ oas_setup_base }}.{{ ovd_as_setup_type }}'
     force: no
