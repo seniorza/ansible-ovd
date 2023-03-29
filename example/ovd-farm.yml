@@ -17,7 +17,7 @@
 - hosts: sm
   vars:
     ovd_mysql_password: "{{ lookup('password', 'credentials/ovd_mysql_password length=15 chars=ascii_letters,digits') }}"
-    ovd_sm_admin_password: "{{ lookup('password', 'credentials/ovd_sm_admin_password length=10 chars=ascii_letters,digits') }}"
+#    ovd_sm_admin_password: "{{ lookup('password', 'credentials/ovd_sm_admin_password length=10 chars=ascii_letters,digits') }}"
     ovd_session_manager: '127.0.0.1'
   roles:
     - ovd-sm
