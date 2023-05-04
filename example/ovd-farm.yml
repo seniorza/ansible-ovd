@@ -26,6 +26,7 @@
 - hosts: gw
   vars:
     ovd_session_manager: "{{ groups['sm'] | map('extract', hostvars, ['ansible_host']) | list | first }}"
+    ovd_default_webaccess: '{{ owa_ip_address }}'
   roles:
     - ovd-esg
 
